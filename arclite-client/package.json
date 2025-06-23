@@ -1,16 +1,26 @@
 {
-  "name": "arclite-client",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.3.4"
-  }
+    "name": "arclite-client",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "next": "15.3.4",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+    },
+    "keywords": [
+        "arclite",
+        "multiplayer",
+        "game",
+        "nextjs",
+        "frontend"
+    ],
+    "author": "Prathap Bharman",
+    "license": "MIT",
+    "description": "Frontend for Arclite — a real-time multiplayer web game"
 }
