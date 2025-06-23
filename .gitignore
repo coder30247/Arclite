@@ -1,2 +1,5 @@
 # Ignore node_modules directory
 arclite-client/node_modules
+arclite-client/.next
+
+arclite-server/node_modules
