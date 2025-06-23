@@ -1,0 +1,26 @@
+{
+    "name": "arclite-server",
+    "version": "1.0.0",
+    "description": "Multiplayer backend server for Arclite",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js"
+    },
+    "keywords": [
+        "socket.io",
+        "multiplayer",
+        "express",
+        "game"
+    ],
+    "author": "Prathap Bharman",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.19.2",
+        "socket.io": "^4.7.4"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
+}
