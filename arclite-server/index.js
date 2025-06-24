@@ -3,7 +3,7 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-// import { socket_handler } from "./Socket_Handler.js"; // Ensure this file also uses ESM syntax
+import { socket_handler } from "./Socket_Handler.js"; // Ensure this file also uses ESM syntax
 
 const app = express();
 const server = http.createServer(app);
@@ -19,7 +19,7 @@ const io = new Server(server, {
 
 app.use(express.static("public"));
 
-// socket_handler(io); // Initialize all socket handlers
+socket_handler(io); // Initialize all socket handlers
 
 server.listen(4000, () => {
     console.log("🎮 Server running at http://localhost:4000");

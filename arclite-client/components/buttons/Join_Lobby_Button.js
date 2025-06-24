@@ -10,7 +10,7 @@ export default function Join_Lobby_Button() {
     const username = User_Store((state) => state.username);
     const set_lobby_id = Lobby_Store((state) => state.set_lobby_id);
     const set_players = Lobby_Store((state) => state.set_players);
-    const set_host_id = Lobby_Store((state) => state.set_host_id)
+    const set_host_id = Lobby_Store((state) => state.set_host_id);
     const router = useRouter();
 
     const handle_join_lobby = () => {
@@ -34,7 +34,7 @@ export default function Join_Lobby_Button() {
     };
 
     return (
-        <div className="w-full">
+        <div className="w-full max-w-md mx-auto">
             <input
                 type="text"
                 value={lobby_id_input}
@@ -42,13 +42,13 @@ export default function Join_Lobby_Button() {
                     set_lobby_id_input(e.target.value.toUpperCase())
                 }
                 placeholder="Enter Room ID"
-                className="w-full p-2 border border-gray-300 rounded mb-2 uppercase tracking-widest text-center text-lg"
+                className="w-full mb-3 px-4 py-2 border border-gray-600 rounded-xl bg-gray-900 text-white uppercase tracking-widest text-center text-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                 maxLength={6}
                 autoComplete="off"
             />
             <button
                 onClick={handle_join_lobby}
-                className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition duration-200"
+                className="w-full bg-green-600 text-white font-semibold py-2 rounded-xl hover:bg-green-700 transition transform hover:scale-105 shadow-md"
             >
                 Join Room
             </button>

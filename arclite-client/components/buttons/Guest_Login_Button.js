@@ -26,13 +26,15 @@ export default function Guest_Login_Button({
 
     return (
         <button
-            className="button button_guest"
+            className={`w-full px-6 py-2 rounded-xl text-white font-semibold shadow-md transition transform hover:scale-105 ${
+                loading
+                    ? "bg-gray-500 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700"
+            }`}
             onClick={handle_guest_login}
             disabled={loading}
-            data-hover="Jump In!"
-            >
-                <span>{loading ? "Logging in..." : "Play as Guest"}</span>
+        >
+            {loading ? "Logging in..." : "Play as Guest"}
         </button>
-
     );
 }

@@ -152,19 +152,27 @@ export default function Login_Gate({ children }) {
     if (!firebase_uid) {
         return (
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4">
-                <div className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl rounded-2xl p-10 w-full max-w-md text-center">
-                    <h1 className="text-4xl font-extrabold text-cyan-400 drop-shadow-md mb-6 tracking-wide">
+                {/* Glassy Card Container */}
+                <div className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl rounded-2xl px-8 py-12 w-full max-w-md text-center animate-fade-in">
+                    {/* Title */}
+                    <h1 className="text-4xl sm:text-5xl font-extrabold text-cyan-400 drop-shadow-md mb-6 tracking-wider">
                         Welcome to Arclite
                     </h1>
 
-                    <p className="text-base text-gray-300 mb-8">
-                        Please choose a way to log in and start playing.
+                    {/* Subtitle */}
+                    <p className="text-sm sm:text-base text-gray-300 mb-8 tracking-wide">
+                        Choose a login method to enter the battle.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    {/* Buttons */}
+                    <div className="flex flex-col sm:flex-row sm:justify-center gap-4 w-full">
                         <Login_Button />
                         <Signup_Button />
-                        <Guest_Login_Button />
+                        <Guest_Login_Button
+                            loading={loading}
+                            set_loading={set_loading}
+                            set_login_error={set_login_error}
+                        />
                     </div>
                 </div>
             </div>

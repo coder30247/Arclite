@@ -46,10 +46,14 @@ export default function Create_Lobby_Button() {
         socket.emit("create_lobby", { lobby_id, username });
 
         socket.on("lobby_created", ({ lobby_id, firebase_uid }) => {
-            console.log(`Lobby created: ${lobby_id}, for user: ${firebase_uid}`);
+            console.log(
+                `Lobby created: ${lobby_id}, for user: ${firebase_uid}`
+            );
             set_lobby_id(lobby_id);
             set_host_id(firebase_uid); // Set the host ID
-            set_players([{ firebase_uid: firebase_uid, name: username, is_host: true }]); // Add only the host
+            set_players([
+                { firebase_uid: firebase_uid, name: username, is_host: true },
+            ]); // Add only the host
             router.push(`/lobby/${lobby_id}`);
         });
 
@@ -62,7 +66,7 @@ export default function Create_Lobby_Button() {
     return (
         <div className="flex flex-col items-center space-y-4">
             <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:bg-blue-300"
+                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition transform hover:scale-105 shadow-lg"
                 onClick={handle_create_lobby}
                 disabled={!username || !socket}
             >

@@ -4,7 +4,6 @@ import Socket_Store from "../states/Socket_Store";
 import User_Store from "../states/User_Store";
 import { useRouter } from "next/router";
 import { FixedSizeList } from "react-window";
-import { debounce } from "lodash";
 
 export default function Lobby_Chat({ is_connected }) {
     const username = useStore(User_Store, (state) => state.username);
@@ -60,10 +59,6 @@ export default function Lobby_Chat({ is_connected }) {
             <h3 className="text-lg font-semibold text-green-700 mb-2">
                 Lobby Chat
             </h3>
-            <div className="mb-2 text-sm text-gray-500">
-                {is_connected ? "Connected" : "Disconnected"}
-            </div>
-
             <div className="h-48 overflow-y-auto border border-gray-300 rounded mb-2 p-2 text-sm">
                 <FixedSizeList
                     ref={list_ref}
