@@ -52,8 +52,13 @@ export function game_handler(io, socket, player_manager, lobby_manager) {
         });
     });
 
-    socket.on("bullet:fire", ({ room_id, x, y, direction }) => {
-        // Broadcast the bullet spawn event to all players in the room
-        socket.to(room_id).emit("bullet:spawn", { x, y, direction });
+
+    
+    socket.on("bullet:spawn", (data) => {
+        socket.to(data.room_id).emit("bullet:spawn", data);
+    });
+
+    socket.on("bullet:update", (data) => {
+        socket.to(data.room_id).emit("bullet:update", data);
     });
 }

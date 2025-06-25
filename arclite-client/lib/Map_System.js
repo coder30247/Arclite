@@ -1,5 +1,3 @@
-import Phaser from "phaser";
-
 export function create_map(scene) {
     // Create static platforms group
     const platforms = scene.physics.add.staticGroup();
