@@ -6,7 +6,7 @@ import Socket_Store from "../states/Socket_Store.js";
 import { preload_map, create_map } from "../lib/Map_System.js";
 import {
     preload_players,
-    create_players,
+    setup_players,
     player_movement,
 } from "../lib/Player_System.js";
 
@@ -39,6 +39,16 @@ export default function Game_Canvas({ room_id }) {
             }
         });
 
+        // Listen for remote bullet spawn
+        socket.on(
+            "bullet:spawn",
+            ({ bullet_id, shooter_id, x, y, c_x, c_y }) => {
+                // Spawn the bullet directly
+                spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id);
+            }
+        );
+
+
         const config = {
             type: Phaser.AUTO,
             width: 800,
@@ -69,7 +79,7 @@ export default function Game_Canvas({ room_id }) {
 
         function create() {
             const platforms = create_map(this);
-            create_players(this, players, your_id, sprite_map, platforms);
+        setup_players(this, players, your_id, sprite_map, platforms);
             setup_bullets(this, socket, your_id, room_id);
         }
 

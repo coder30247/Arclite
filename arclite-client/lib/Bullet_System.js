@@ -1,15 +1,8 @@
 import Phaser from "phaser";
+import { Bullet } from "./Bullet";
 
 let bullets;
-let shoot_key;
 let can_shoot = true;
-const shoot_cooldown = 300;
-
-let your_id;
-let socket;
-let room_id;
-
-const bullet_map = new Map(); // key: bullet_id, value: bullet sprite
 let bullet_counter = 0;
 
 export function preload_bullets(scene) {
@@ -19,98 +12,105 @@ export function preload_bullets(scene) {
     );
 }
 
-export function setup_bullets(scene, socket, your_id, room_id) {
+export function setup_bullets(scene) {
     bullets = scene.physics.add.group({
-        classType: Phaser.Physics.Arcade.Image,
+        classType: Bullet,
         maxSize: 50,
         runChildUpdate: false,
     });
-
-    shoot_key = scene.input.keyboard.addKey(
-        Phaser.Input.Keyboard.KeyCodes.SPACE
-    );
-
-
-    // Listen for remote bullet spawn
-    socket.on("bullet:spawn", ({ bullet_id, shooter_id, x, y, direction }) => {
-        const bullet = spawn_bullet(scene, bullet_id, x, y, direction);
-        bullet_map.set(bullet_id, bullet);
-    });
-
-    // Listen for bullet position updates
-    socket.on("bullet:update", ({ bullet_id, x, y }) => {
-        const bullet = bullet_map.get(bullet_id);
-        if (bullet) bullet.setPosition(x, y);
-    });
 }
 
-export function spawn_bullet(scene, bullet_id, x, y, direction) {
+export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
     const bullet = bullets.get(x, y, "bullet");
+
     if (!bullet) return;
 
-    const offset = direction === "left" ? -20 : 20;
-    const velocity = direction === "left" ? -400 : 400;
+    // Initialize bullet properties
+    bullet.init({
+        bullet_id,
+        speed: 400,
+        damage: 20,
+        lifetime: 2000,
+        shooter_id,
+        direction: { x: c_x, y: c_y },
+    });
 
-    bullet.enableBody(true, x + offset, y, true, true);
+    // Calculate normalized velocity vector
+    const dx = c_x - x;
+    const dy = c_y - y;
+    const magnitude = Math.sqrt(dx * dx + dy * dy);
+    const v_x = (dx / magnitude) * bullet.speed;
+    const v_y = (dy / magnitude) * bullet.speed;
+
+    bullet.enableBody(true, x, y, true, true);
     bullet.setActive(true);
     bullet.setVisible(true);
     bullet.body.setAllowGravity(false);
     bullet.setScale(0.5);
-    bullet.setVelocityX(velocity);
+    bullet.setVelocity(v_x, v_y);
 
-    scene.time.delayedCall(2000, () => {
+    // Auto-destroy bullet after lifetime
+    scene.time.delayedCall(bullet.lifetime, () => {
         bullets.killAndHide(bullet);
         bullet.body.enable = false;
-        bullet_map.delete(bullet_id);
     });
 
     return bullet;
 }
 
-export function update_bullets(scene, socket, room_id, last_direction_faced) {
+export function update_bullets(scene, socket, room_id) {
     const shooter = scene.player;
+    const your_id = shooter.firebase_uid;
     if (!shooter || !can_shoot) return;
 
-    const vx = shooter.body.velocity.x;
-    if (vx < 0) last_direction_faced.current = "left";
-    else if (vx > 0) last_direction_faced.current = "right";
-
-    if (Phaser.Input.Keyboard.JustDown(shoot_key)) {
+    const pointer = scene.input.activePointer;
+    if (pointer.isDown) {
         can_shoot = false;
-        setTimeout(() => (can_shoot = true), shoot_cooldown);
+        setTimeout(() => (can_shoot = true), 300);
 
-        const direction = last_direction_faced.current;
         const bullet_id = `${your_id}_${Date.now()}_${bullet_counter++}`;
+        const world_point = scene.cameras.main.getWorldPoint(
+            pointer.x,
+            pointer.y
+        );
 
-        // Emit spawn info
+        // Emit bullet spawn to server
         socket.emit("bullet:spawn", {
             bullet_id,
             shooter_id: your_id,
-            direction,
             x: shooter.x,
             y: shooter.y,
+            c_x: world_point.x,
+            c_y: world_point.y,
             room_id,
         });
 
-        const bullet = spawn_bullet(
+        // Spawn locally
+        spawn_bullet(
             scene,
             bullet_id,
             shooter.x,
             shooter.y,
-            direction
+            world_point.x,
+            world_point.y,
+            your_id
         );
-        bullet_map.set(bullet_id, bullet);
     }
 
-    // Host sends position updates
-    bullet_map.forEach((bullet, bullet_id) => {
+    // Emit position updates for active bullets
+    bullets.getChildren().forEach((bullet) => {
         if (bullet.active && bullet.visible) {
             socket.emit("bullet:update", {
-                bullet_id,
+                bullet_id: bullet.bullet_id,
                 x: bullet.x,
                 y: bullet.y,
                 room_id,
             });
         }
     });
+}
+
+// Optional: access to group
+export function get_bullets() {
+    return bullets;
 }

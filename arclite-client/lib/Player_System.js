@@ -6,7 +6,7 @@ export function preload_players(scene) {
     );
 }
 
-export function create_players(scene, players, your_id, sprite_map, platforms) {
+export function setup_players(scene, players, your_id, sprite_map, platforms) {
     let index = 0;
 
     players.forEach((player) => {
@@ -26,6 +26,13 @@ export function create_players(scene, players, your_id, sprite_map, platforms) {
         }
         index++;
     });
+
+    scene.cursors = scene.input.keyboard.addKeys({
+        up: Phaser.Input.Keyboard.KeyCodes.W,
+        left: Phaser.Input.Keyboard.KeyCodes.A,
+        down: Phaser.Input.Keyboard.KeyCodes.S,
+        right: Phaser.Input.Keyboard.KeyCodes.D,
+    });
 }
 
 export function player_movement(scene, socket, room_id) {
@@ -43,6 +50,5 @@ export function player_movement(scene, socket, room_id) {
 
         const { x, y } = scene.player;
         socket.emit("player:update_position", { room_id, x, y });
-        
     }
 }
