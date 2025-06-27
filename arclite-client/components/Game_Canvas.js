@@ -7,7 +7,7 @@ import { preload_map, create_map } from "../lib/Map_System.js";
 import {
     preload_players,
     create_players,
-    update_players_movement,
+    player_movement,
 } from "../lib/Player_System.js";
 
 import {
@@ -25,7 +25,6 @@ export default function Game_Canvas({ room_id }) {
     const your_id = Auth_Store((state) => state.firebase_uid);
     const socket = Socket_Store((state) => state.socket);
     const sprite_map = useRef(new Map());
-    const sprite_positions = useRef(new Map());
     const last_direction_faced = useRef("right");
 
     useEffect(() => {
@@ -33,11 +32,12 @@ export default function Game_Canvas({ room_id }) {
 
         let game;
 
-        const handle_position_update = ({ firebase_uid, x, y }) => {
-            sprite_positions.current.set(firebase_uid, { x, y });
-        };
-
-        socket.on("player:position_update", handle_position_update);
+        socket.on("player:position_update", ({ firebase_uid, x, y }) => {
+            const sprite = sprite_map.current.get(firebase_uid);
+            if (sprite) {
+                sprite.setPosition(x, y);
+            }
+        });
 
         const config = {
             type: Phaser.AUTO,
@@ -70,25 +70,17 @@ export default function Game_Canvas({ room_id }) {
         function create() {
             const platforms = create_map(this);
             create_players(this, players, your_id, sprite_map, platforms);
-
             setup_bullets(this, socket, your_id, room_id);
         }
 
         function update() {
-            update_players_movement(
-                this,
-                socket,
-                room_id,
-                your_id,
-                sprite_map,
-                sprite_positions
-            );
+            player_movement(this, socket, room_id);
 
             update_bullets(this, socket, room_id, last_direction_faced);
         }
 
         return () => {
-            socket.off("player:position_update", handle_position_update);
+            socket.off("player:position_update");
             game.destroy(true);
         };
     }, [room_id]);

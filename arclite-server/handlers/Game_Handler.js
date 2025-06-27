@@ -52,8 +52,6 @@ export function game_handler(io, socket, player_manager, lobby_manager) {
         });
     });
 
-
-    
     socket.on("bullet:spawn", (data) => {
         socket.to(data.room_id).emit("bullet:spawn", data);
     });
