@@ -15,6 +15,7 @@ import {
     setup_bullets,
     update_bullets,
     spawn_bullet,
+    get_bullets,
 } from "../lib/Bullet_System.js";
 
 import Phaser from "phaser";
@@ -32,22 +33,7 @@ export default function Game_Canvas({ room_id }) {
 
         let game;
 
-        socket.on("player:position_update", ({ firebase_uid, x, y }) => {
-            const sprite = sprite_map.current.get(firebase_uid);
-            if (sprite) {
-                sprite.setPosition(x, y);
-            }
-        });
-
         // Listen for remote bullet spawn
-        socket.on(
-            "bullet:spawn",
-            ({ bullet_id, shooter_id, x, y, c_x, c_y }) => {
-                // Spawn the bullet directly
-                spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id);
-            }
-        );
-
 
         const config = {
             type: Phaser.AUTO,
@@ -79,8 +65,34 @@ export default function Game_Canvas({ room_id }) {
 
         function create() {
             const platforms = create_map(this);
-        setup_players(this, players, your_id, sprite_map, platforms);
+            setup_players(this, players, your_id, sprite_map, platforms);
             setup_bullets(this, socket, your_id, room_id);
+
+            socket.on("player:position_update", ({ firebase_uid, x, y }) => {
+                const sprite = sprite_map.current.get(firebase_uid);
+                if (sprite) {
+                    sprite.setPosition(x, y);
+                }
+            });
+
+            socket.on(
+                "bullet:spawn",
+                ({ bullet_id, shooter_id, x, y, c_x, c_y }) => {
+                    // Spawn the bullet directly
+                    spawn_bullet(this, bullet_id, x, y, c_x, c_y, shooter_id);
+                }
+            );
+
+            socket.on("bullet:update", ({ bullet_id, x, y }) => {
+                // Find the bullet and update its position
+                get_bullets()
+                    .getChildren()
+                    .forEach((bullet) => {
+                        if (bullet.bullet_id === bullet_id) {
+                            bullet.setPosition(x, y);
+                        }
+                    });
+            });
         }
 
         function update() {
@@ -91,6 +103,8 @@ export default function Game_Canvas({ room_id }) {
 
         return () => {
             socket.off("player:position_update");
+            socket.off("bullet:spawn");
+            // Clean up Phaser game instance
             game.destroy(true);
         };
     }, [room_id]);

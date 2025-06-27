@@ -110,7 +110,6 @@ export function update_bullets(scene, socket, room_id) {
     });
 }
 
-// Optional: access to group
 export function get_bullets() {
     return bullets;
 }
