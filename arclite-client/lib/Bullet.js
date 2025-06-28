@@ -9,6 +9,8 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
 
     constructor(scene, x, y) {
         super(scene, x, y, "bullet"); // Only call this — NO custom args
+        scene.add.existing(this);
+        scene.physics.add.existing(this);
     }
 
     // Use this to initialize bullet props
@@ -19,5 +21,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
         this.lifetime = lifetime;
         this.shooter_id = shooter_id;
         this.direction = direction;
+        // Optional: safely reset physics body
+        if (this.body) {
+            this.body.reset(this.x, this.y);
+        }
     }
 }

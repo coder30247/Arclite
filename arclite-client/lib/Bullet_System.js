@@ -1,10 +1,6 @@
 import Phaser from "phaser";
 import { Bullet } from "./Bullet";
 
-let bullets;
-let can_shoot = true;
-let bullet_counter = 0;
-
 export function preload_bullets(scene) {
     scene.load.image(
         "bullet",
@@ -13,19 +9,27 @@ export function preload_bullets(scene) {
 }
 
 export function setup_bullets(scene) {
-    bullets = scene.physics.add.group({
-        classType: Bullet,
-        maxSize: 50,
-        runChildUpdate: false,
-    });
+    // Reserved for future bullet pool setup if needed
+    scene.can_shoot = true;
+    scene.bullet_counter = 0;
 }
 
-export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
-    const bullet = bullets.get(x, y, "bullet");
+export function spawn_bullet(
+    scene,
+    bullet_id,
+    x,
+    y,
+    c_x,
+    c_y,
+    shooter_id,
+    bullet_map
+) {
+    const bullet = new Bullet(scene, x, y);
+    if (!bullet) {
+        console.error("❌ Failed to create bullet instance");
+        return null;
+    }
 
-    if (!bullet) return;
-
-    // Initialize bullet properties
     bullet.init({
         bullet_id,
         speed: 400,
@@ -35,7 +39,8 @@ export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
         direction: { x: c_x, y: c_y },
     });
 
-    // Calculate normalized velocity vector
+    bullet_map.set(bullet_id, bullet);
+
     const dx = c_x - x;
     const dy = c_y - y;
     const magnitude = Math.sqrt(dx * dx + dy * dy);
@@ -49,32 +54,30 @@ export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
     bullet.setScale(0.5);
     bullet.setVelocity(v_x, v_y);
 
-    // Auto-destroy bullet after lifetime
     scene.time.delayedCall(bullet.lifetime, () => {
-        bullets.killAndHide(bullet);
-        bullet.body.enable = false;
+        bullet.destroy();
+        bullet_map.delete(bullet_id);
     });
 
     return bullet;
 }
 
-export function update_bullets(scene, socket, room_id) {
+export function shoot_bullets(scene, socket, room_id, bullet_map) {
     const shooter = scene.player;
-    const your_id = shooter.firebase_uid;
-    if (!shooter || !can_shoot) return;
+    const your_id = shooter?.firebase_uid;
+    if (!shooter || !scene.can_shoot) return;
 
     const pointer = scene.input.activePointer;
     if (pointer.isDown) {
-        can_shoot = false;
-        setTimeout(() => (can_shoot = true), 300);
+        scene.can_shoot = false;
+        scene.time.delayedCall(300, () => (scene.can_shoot = true));
 
-        const bullet_id = `${your_id}_${Date.now()}_${bullet_counter++}`;
+        const bullet_id = `${your_id}_${Date.now()}_${scene.bullet_counter++}`;
         const world_point = scene.cameras.main.getWorldPoint(
             pointer.x,
             pointer.y
         );
 
-        // Emit bullet spawn to server
         socket.emit("bullet:spawn", {
             bullet_id,
             shooter_id: your_id,
@@ -85,7 +88,6 @@ export function update_bullets(scene, socket, room_id) {
             room_id,
         });
 
-        // Spawn locally
         spawn_bullet(
             scene,
             bullet_id,
@@ -93,23 +95,19 @@ export function update_bullets(scene, socket, room_id) {
             shooter.y,
             world_point.x,
             world_point.y,
-            your_id
+            your_id,
+            bullet_map
         );
     }
-
-    // Emit position updates for active bullets
-    bullets.getChildren().forEach((bullet) => {
-        if (bullet.active && bullet.visible) {
-            socket.emit("bullet:update", {
-                bullet_id: bullet.bullet_id,
-                x: bullet.x,
-                y: bullet.y,
-                room_id,
-            });
-        }
-    });
 }
 
-export function get_bullets() {
-    return bullets;
+export function sync_bullets(bullet_map, socket, room_id) {
+    bullet_map.forEach((bullet, bullet_id) => {
+        socket.emit("bullet:update", {
+            bullet_id,
+            x: bullet.x,
+            y: bullet.y,
+            room_id,
+        });
+    });
 }
