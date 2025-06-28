@@ -9,21 +9,14 @@ export function preload_bullets(scene) {
 }
 
 export function setup_bullets(scene) {
-    // Reserved for future bullet pool setup if needed
     scene.can_shoot = true;
     scene.bullet_counter = 0;
+
+    // Create a bullet physics group
+    scene.bullet_group = scene.physics.add.group();
 }
 
-export function spawn_bullet(
-    scene,
-    bullet_id,
-    x,
-    y,
-    c_x,
-    c_y,
-    shooter_id,
-    bullet_map
-) {
+export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
     const bullet = new Bullet(scene, x, y);
     if (!bullet) {
         console.error("❌ Failed to create bullet instance");
@@ -39,7 +32,7 @@ export function spawn_bullet(
         direction: { x: c_x, y: c_y },
     });
 
-    bullet_map.set(bullet_id, bullet);
+    scene.bullet_group.add(bullet); // Add to group for physics
 
     const dx = c_x - x;
     const dy = c_y - y;
@@ -50,19 +43,18 @@ export function spawn_bullet(
     bullet.enableBody(true, x, y, true, true);
     bullet.setActive(true);
     bullet.setVisible(true);
-    bullet.body.setAllowGravity(false);
+    bullet.body.setAllowGravity(false); // No gravity
     bullet.setScale(0.5);
     bullet.setVelocity(v_x, v_y);
 
     scene.time.delayedCall(bullet.lifetime, () => {
         bullet.destroy();
-        bullet_map.delete(bullet_id);
     });
 
     return bullet;
 }
 
-export function shoot_bullets(scene, socket, room_id, bullet_map) {
+export function shoot_bullets(scene, socket, room_id) {
     const shooter = scene.player;
     const your_id = shooter?.firebase_uid;
     if (!shooter || !scene.can_shoot) return;
@@ -95,16 +87,15 @@ export function shoot_bullets(scene, socket, room_id, bullet_map) {
             shooter.y,
             world_point.x,
             world_point.y,
-            your_id,
-            bullet_map
+            your_id
         );
     }
 }
 
-export function sync_bullets(bullet_map, socket, room_id) {
-    bullet_map.forEach((bullet, bullet_id) => {
+export function sync_bullets(scene, socket, room_id) {
+    scene.bullet_group.getChildren().forEach((bullet) => {
         socket.emit("bullet:update", {
-            bullet_id,
+            bullet_id: bullet.bullet_id,
             x: bullet.x,
             y: bullet.y,
             room_id,

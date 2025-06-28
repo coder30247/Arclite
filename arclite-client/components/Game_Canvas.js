@@ -26,9 +26,6 @@ export default function Game_Canvas({ room_id }) {
     const your_id = Auth_Store((state) => state.firebase_uid);
     const socket = Socket_Store((state) => state.socket);
 
-    const sprite_map = useRef(new Map());
-    const bullet_map = useRef(new Map()); // Ref for bullets
-
     useEffect(() => {
         if (!room_id || !game_container_ref.current) return;
 
@@ -64,11 +61,13 @@ export default function Game_Canvas({ room_id }) {
 
         function create() {
             const platforms = create_map(this);
-            setup_players(this, players, your_id, sprite_map, platforms);
-            setup_bullets(this); // NEW: initialize can_shoot & bullet_counter
+            setup_players(this, players, your_id, platforms);
+            setup_bullets(this);
 
             socket.on("player:position_update", ({ firebase_uid, x, y }) => {
-                const sprite = sprite_map.current.get(firebase_uid);
+                const sprite = this.player_group
+                    .getChildren()
+                    .find((s) => s.firebase_uid === firebase_uid);
                 if (sprite) {
                     sprite.setPosition(x, y);
                 }
@@ -77,28 +76,22 @@ export default function Game_Canvas({ room_id }) {
             socket.on(
                 "bullet:spawn",
                 ({ bullet_id, shooter_id, x, y, c_x, c_y }) => {
-                    spawn_bullet(
-                        this,
-                        bullet_id,
-                        x,
-                        y,
-                        c_x,
-                        c_y,
-                        shooter_id,
-                        bullet_map.current // ✅ FIXED HERE
-                    );
+                    spawn_bullet(this, bullet_id, x, y, c_x, c_y, shooter_id);
                 }
             );
 
             socket.on("bullet:update", ({ bullet_id, x, y }) => {
-                const bullet = bullet_map.current.get(bullet_id);
+                const bullet = this.bullet_group
+                    .getChildren()
+                    .find((b) => b.bullet_id === bullet_id);
                 if (bullet) bullet.setPosition(x, y);
             });
         }
+
         function update() {
             player_movement(this, socket, room_id);
-            shoot_bullets(this, socket, room_id, bullet_map.current); // ✅
-            sync_bullets(bullet_map.current, socket, room_id); // ✅
+            shoot_bullets(this, socket, room_id);
+            sync_bullets(this, socket, room_id);
         }
 
         return () => {
