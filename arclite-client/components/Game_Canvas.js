@@ -14,7 +14,6 @@ import {
     preload_bullets,
     setup_bullets,
     shoot_bullets,
-    sync_bullets,
     spawn_bullet,
 } from "../lib/Bullet_System.js";
 
@@ -91,7 +90,6 @@ export default function Game_Canvas({ room_id }) {
         function update() {
             player_movement(this, socket, room_id);
             shoot_bullets(this, socket, room_id);
-            sync_bullets(this, socket, room_id);
         }
 
         return () => {

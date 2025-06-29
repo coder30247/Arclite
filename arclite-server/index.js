@@ -2,6 +2,8 @@
 
 import express from "express";
 import http from "http";
+import "dotenv/config";
+
 import { Server } from "socket.io";
 import { socket_handler } from "./Socket_Handler.js"; // Ensure this file also uses ESM syntax
 
@@ -10,7 +12,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: [process.env.ALLOWED_CLIENT_ORIGIN, "http://localhost:3000"],
         methods: ["GET", "POST"],
     },
     pingTimeout: 5000,

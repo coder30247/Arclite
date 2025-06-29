@@ -4,3 +4,4 @@ arclite-client/.next
 arclite-client/.env.local
 
 arclite-server/node_modules
+arclite-server/.env

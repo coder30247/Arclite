@@ -92,13 +92,3 @@ export function shoot_bullets(scene, socket, room_id) {
     }
 }
 
-export function sync_bullets(scene, socket, room_id) {
-    scene.bullet_group.getChildren().forEach((bullet) => {
-        socket.emit("bullet:update", {
-            bullet_id: bullet.bullet_id,
-            x: bullet.x,
-            y: bullet.y,
-            room_id,
-        });
-    });
-}

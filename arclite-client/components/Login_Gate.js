@@ -25,10 +25,11 @@ const initialize_socket = (current_user, socket_ref) => {
         return socket_ref.current;
     }
     console.log(`Initializing Socket.IO for user: ${current_user.uid}`);
-    socket_ref.current = io("http://localhost:4000", {
+    socket_ref.current = io(process.env.NEXT_PUBLIC_SOCKET_SERVER, {
         autoConnect: true,
         reconnection: false,
     });
+
     socket_ref.current.on("connect", () => {
         console.log(
             `Socket connected: ${current_user.uid}, ${socket_ref.current.id}`
