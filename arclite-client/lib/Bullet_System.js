@@ -13,7 +13,27 @@ export function setup_bullets(scene) {
     scene.bullet_counter = 0;
 
     // Create a bullet physics group
-    scene.bullet_group = scene.physics.add.group();
+    scene.bullet_group = scene.physics.add.group({
+        classType: Bullet,
+        collideWorldBounds: true, // 👈 enable world bounds collision
+    });
+
+    scene.physics.world.on("worldbounds", (body) => {
+        const sprite = body.gameObject;
+
+        if (scene.bullet_group.contains(sprite)) {
+            sprite.destroy(); // 💥 Bullet hits world, so destroy it
+        }
+    });
+
+    scene.physics.add.collider(
+        scene.bullet_group,
+        scene.platforms,
+        (bullet, platform) => {
+            bullet.destroy(); // 💥 Bullet hits platform, so destroy it
+        }
+    );
+
 }
 
 export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
@@ -40,6 +60,8 @@ export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
     const v_x = (dx / magnitude) * bullet.speed;
     const v_y = (dy / magnitude) * bullet.speed;
 
+    bullet.setCollideWorldBounds(true); // 👈 enable world bounds collision
+    bullet.body.onWorldBounds = true; // 👈 enable the world bounds event
     bullet.enableBody(true, x, y, true, true);
     bullet.setActive(true);
     bullet.setVisible(true);
@@ -91,4 +113,3 @@ export function shoot_bullets(scene, socket, room_id) {
         );
     }
 }
-

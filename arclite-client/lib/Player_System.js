@@ -6,9 +6,13 @@ export function preload_players(scene) {
     );
 }
 
-export function setup_players(scene, players, your_id, platforms) {
+export function setup_players(scene, players, your_id) {
     // Create a group for player sprites
-    scene.player_group = scene.physics.add.group();
+    scene.player_group = scene.physics.add.group({
+        collideWorldBounds: true,
+        runChildUpdate: true, // if you want individual update loops
+    });
+    scene.physics.add.collider(scene.player_group, scene.platforms);
 
     let index = 0;
     players.forEach((player) => {
@@ -17,8 +21,6 @@ export function setup_players(scene, players, your_id, platforms) {
 
         const sprite = scene.physics.add.sprite(x, y, "player");
         sprite.firebase_uid = player.firebase_uid; // Attach firebase_uid to sprite
-        sprite.setCollideWorldBounds(true);
-        scene.physics.add.collider(sprite, platforms);
         scene.player_group.add(sprite); // Add sprite to the group
 
         if (player.firebase_uid === your_id) {

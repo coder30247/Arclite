@@ -59,9 +59,41 @@ export default function Game_Canvas({ room_id }) {
         }
 
         function create() {
-            const platforms = create_map(this);
-            setup_players(this, players, your_id, platforms);
+            create_map(this);
+            setup_players(this, players, your_id);
             setup_bullets(this);
+            this.physics.add.overlap(
+                this.player_group,
+                this.bullet_group,
+                (player, bullet) => {
+                    const shooter_id = bullet.shooter_id;
+
+                    // ✅ Only shooter handles the hit
+                    if (shooter_id !== your_id) return;
+
+                    // ❌ Prevent self-hit
+                    if (player.firebase_uid === shooter_id) return;
+
+                    // ✅ Prevent multiple hits
+                    if (!bullet.active || !player.active) return;
+
+                    console.log(
+                        `🎯 Player ${player.firebase_uid} hit by bullet from ${shooter_id}`
+                    );
+
+                    // Emit damage to server
+                    socket.emit("player:damaged", {
+                        shooter_id,
+                        victim_id: player.firebase_uid,
+                        bullet_id: bullet.bullet_id,
+                        damage: 20,
+                        room_id,
+                    });
+
+                    // 💥 Destroy bullet
+                    bullet.destroy();
+                }
+            );
 
             socket.on("player:position_update", ({ firebase_uid, x, y }) => {
                 const sprite = this.player_group
@@ -78,13 +110,6 @@ export default function Game_Canvas({ room_id }) {
                     spawn_bullet(this, bullet_id, x, y, c_x, c_y, shooter_id);
                 }
             );
-
-            socket.on("bullet:update", ({ bullet_id, x, y }) => {
-                const bullet = this.bullet_group
-                    .getChildren()
-                    .find((b) => b.bullet_id === bullet_id);
-                if (bullet) bullet.setPosition(x, y);
-            });
         }
 
         function update() {
