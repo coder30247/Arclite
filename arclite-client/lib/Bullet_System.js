@@ -45,7 +45,7 @@ export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
 
     bullet.init({
         bullet_id,
-        speed: 400,
+        speed: 1000,
         damage: 20,
         lifetime: 2000,
         shooter_id,
@@ -79,7 +79,7 @@ export function spawn_bullet(scene, bullet_id, x, y, c_x, c_y, shooter_id) {
 export function shoot_bullets(scene, socket, room_id) {
     const shooter = scene.player;
     const your_id = shooter?.firebase_uid;
-    if (!shooter || !scene.can_shoot) return;
+    if (!shooter.alive || !scene.can_shoot) return;
 
     const pointer = scene.input.activePointer;
     if (pointer.isDown) {

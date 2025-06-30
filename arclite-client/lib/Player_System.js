@@ -21,6 +21,8 @@ export function setup_players(scene, players, your_id) {
 
         const sprite = scene.physics.add.sprite(x, y, "player");
         sprite.firebase_uid = player.firebase_uid; // Attach firebase_uid to sprite
+        sprite.health = 100;
+        sprite.alive = true; // Track if the player is alive
         scene.player_group.add(sprite); // Add sprite to the group
 
         if (player.firebase_uid === your_id) {
@@ -40,7 +42,7 @@ export function setup_players(scene, players, your_id) {
 
 export function player_movement(scene, socket, room_id) {
     const speed = 200;
-    if (scene.player) {
+    if (scene.player.alive) {
         scene.player.setVelocityX(0);
         if (scene.cursors.left.isDown) {
             scene.player.setVelocityX(-speed);

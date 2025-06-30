@@ -60,40 +60,57 @@ export default function Game_Canvas({ room_id }) {
 
         function create() {
             create_map(this);
-            setup_players(this, players, your_id);
+            setup_players(this, players, your_id); // sets this.player internally
             setup_bullets(this);
+
             this.physics.add.overlap(
                 this.player_group,
                 this.bullet_group,
                 (player, bullet) => {
-                    const shooter_id = bullet.shooter_id;
+                    if (!player || !bullet) return;
+                    if (player.firebase_uid === bullet.shooter_id) return;
 
-                    // ✅ Only shooter handles the hit
-                    if (shooter_id !== your_id) return;
+                    // Only shooter emits hit
+                    if (bullet.shooter_id === your_id) {
+                        socket.emit("player:hit", {
+                            shooter_id: bullet.shooter_id,
+                            victim_id: player.firebase_uid,
+                            damage: bullet.damage,
+                            room_id,
+                        });
+                    }
 
-                    // ❌ Prevent self-hit
-                    if (player.firebase_uid === shooter_id) return;
-
-                    // ✅ Prevent multiple hits
-                    if (!bullet.active || !player.active) return;
-
-                    console.log(
-                        `🎯 Player ${player.firebase_uid} hit by bullet from ${shooter_id}`
-                    );
-
-                    // Emit damage to server
-                    socket.emit("player:damaged", {
-                        shooter_id,
-                        victim_id: player.firebase_uid,
-                        bullet_id: bullet.bullet_id,
-                        damage: 20,
-                        room_id,
-                    });
-
-                    // 💥 Destroy bullet
-                    bullet.destroy();
+                    bullet.destroy(); // Destroy after any hit
                 }
             );
+
+            socket.on("player:hit", ({ shooter_id, victim_id, damage }) => {
+                const victim = this.player_group
+                    .getChildren()
+                    .find((s) => s.firebase_uid === victim_id);
+
+                if (
+                    !victim ||
+                    !victim.active ||
+                    typeof victim.health !== "number"
+                )
+                    return;
+
+                victim.health -= damage;
+
+                if (victim.health <= 0 && victim.alive !== false) {
+                    victim.health = 0;
+                    victim.alive = false;
+
+                    victim.setTint(0xff0000);
+                    victim.setAlpha(0.5);
+
+                    this.player_group.remove(victim, true);
+                    victim.destroy();
+
+                    console.log(`Player ${victim_id} has been defeated.`);
+                }
+            });
 
             socket.on("player:position_update", ({ firebase_uid, x, y }) => {
                 const sprite = this.player_group
@@ -120,7 +137,7 @@ export default function Game_Canvas({ room_id }) {
         return () => {
             socket.off("player:position_update");
             socket.off("bullet:spawn");
-            socket.off("bullet:update");
+            socket.off("player:hit");
             game.destroy(true);
         };
     }, [room_id]);

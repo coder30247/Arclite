@@ -56,7 +56,8 @@ export function game_handler(io, socket, player_manager, lobby_manager) {
         socket.to(data.room_id).emit("bullet:spawn", data);
     });
 
-    socket.on("bullet:update", (data) => {
-        socket.to(data.room_id).emit("bullet:update", data);
+    socket.on("player:hit", ({ shooter_id, victim_id, damage, room_id }) => {
+        io.to(room_id).emit("player:hit", { shooter_id, victim_id, damage });
+        console.log(`🎯 Player ${victim_id} hit by bullet from ${shooter_id}`);
     });
 }
