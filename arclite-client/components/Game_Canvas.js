@@ -17,6 +17,8 @@ import {
     spawn_bullet,
 } from "../lib/Bullet_System.js";
 
+import { reduce_health } from "../lib/Damage_System.js";
+
 import Phaser from "phaser";
 
 export default function Game_Canvas({ room_id }) {
@@ -85,31 +87,7 @@ export default function Game_Canvas({ room_id }) {
             );
 
             socket.on("player:hit", ({ shooter_id, victim_id, damage }) => {
-                const victim = this.player_group
-                    .getChildren()
-                    .find((s) => s.firebase_uid === victim_id);
-
-                if (
-                    !victim ||
-                    !victim.active ||
-                    typeof victim.health !== "number"
-                )
-                    return;
-
-                victim.health -= damage;
-
-                if (victim.health <= 0 && victim.alive !== false) {
-                    victim.health = 0;
-                    victim.alive = false;
-
-                    victim.setTint(0xff0000);
-                    victim.setAlpha(0.5);
-
-                    this.player_group.remove(victim, true);
-                    victim.destroy();
-
-                    console.log(`Player ${victim_id} has been defeated.`);
-                }
+                reduce_health(this, victim_id, damage);
             });
 
             socket.on("player:position_update", ({ firebase_uid, x, y }) => {

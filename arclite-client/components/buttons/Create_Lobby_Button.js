@@ -6,6 +6,7 @@ import Lobby_Store from "../../states/Lobby_Store.js";
 
 export default function Create_Lobby_Button() {
     const [error, set_error] = useState(null);
+    const [is_creating, set_is_creating] = useState(false); // ⬅️ Added state
     const router = useRouter();
     const socket = Socket_Store((state) => state.socket);
     const username = User_Store((state) => state.username);
@@ -30,6 +31,8 @@ export default function Create_Lobby_Button() {
     };
 
     const handle_create_lobby = () => {
+        if (is_creating) return; // ⬅️ Prevent duplicate click
+
         if (!username) {
             set_error("Username is required");
             return;
@@ -38,29 +41,36 @@ export default function Create_Lobby_Button() {
             set_error("Not connected to server");
             return;
         }
+
         set_error(null);
+        set_is_creating(true); // ⬅️ Lock the button
+
         const lobby_id = generate_id();
         console.log(
             `Creating lobby with lobby_id: ${lobby_id}, username: ${username}`
         );
         socket.emit("create_lobby", { lobby_id, username });
 
-        socket.on("lobby_created", ({ lobby_id, firebase_uid }) => {
+        const handleSuccess = ({ lobby_id, firebase_uid }) => {
             console.log(
                 `Lobby created: ${lobby_id}, for user: ${firebase_uid}`
             );
             set_lobby_id(lobby_id);
-            set_host_id(firebase_uid); // Set the host ID
+            set_host_id(firebase_uid);
             set_players([
                 { firebase_uid: firebase_uid, name: username, is_host: true },
-            ]); // Add only the host
+            ]);
             router.push(`/lobby/${lobby_id}`);
-        });
+        };
 
-        socket.on("error", (message) => {
+        const handleError = (message) => {
             console.error(`Lobby creation error: ${message}`);
             set_error(message);
-        });
+            set_is_creating(false); // ⬅️ Re-enable button on failure
+        };
+
+        socket.once("lobby_created", handleSuccess);
+        socket.once("error", handleError);
     };
 
     return (
@@ -68,9 +78,9 @@ export default function Create_Lobby_Button() {
             <button
                 className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition transform hover:scale-105 shadow-lg"
                 onClick={handle_create_lobby}
-                disabled={!username || !socket}
+                disabled={!username || !socket || is_creating}
             >
-                Create Lobby
+                {is_creating ? "Creating..." : "Create Lobby"}
             </button>
             {error && <p className="text-red-500">{error}</p>}
         </div>

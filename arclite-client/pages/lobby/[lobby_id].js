@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react"; // Add useState
-import { useStore } from "zustand"; // Add useStore for reactive socket
+import { useEffect, useState } from "react";
+import { useStore } from "zustand";
 import Socket_Store from "../../states/Socket_Store.js";
 import Lobby_Store from "../../states/Lobby_Store.js";
 import Lobby_Chat from "../../components/Lobby_Chat.js";
@@ -9,14 +9,15 @@ import Global_Chat from "../../components/Global_Chat.js";
 export default function Lobby() {
     const router = useRouter();
     const { lobby_id } = router.query;
-    const socket = useStore(Socket_Store, (state) => state.socket); // Reactive socket
+    const socket = useStore(Socket_Store, (state) => state.socket);
     const host_id = useStore(Lobby_Store, (state) => state.host_id);
     const players = useStore(Lobby_Store, (state) => state.players);
     const set_host_id = useStore(Lobby_Store, (state) => state.set_host_id);
     const set_players = useStore(Lobby_Store, (state) => state.set_players);
 
-    const [is_exiting, set_is_exiting] = useState(false); // Track exit state
-    const [is_connected, set_is_connected] = useState(!!socket); // Track connection
+    const [is_exiting, set_is_exiting] = useState(false);
+    const [is_connected, set_is_connected] = useState(!!socket);
+    const [is_starting_game, set_is_starting_game] = useState(false); // 🆕 added
 
     useEffect(() => {
         if (!socket || !lobby_id) {
@@ -41,11 +42,13 @@ export default function Lobby() {
 
         socket.on("game_started", () => {
             console.log(`Game started in lobby: ${lobby_id}`);
+            set_is_starting_game(false); // 🆕 reset start flag
             router.push(`/game/${lobby_id}`);
         });
 
         socket.on("error", (message) => {
             console.error(`Lobby error: ${message}`);
+            set_is_starting_game(false); // 🆕 reset on error
             router.push("/");
             alert(message);
         });
@@ -56,6 +59,8 @@ export default function Lobby() {
             socket.off("connect_error");
             socket.off("update_lobby");
             socket.off("error");
+            socket.off("game_started");
+
             if (socket && lobby_id && is_exiting) {
                 socket.emit("leave_lobby", { lobby_id });
             }
@@ -64,7 +69,7 @@ export default function Lobby() {
 
     const handle_exit = () => {
         console.log(`Exiting lobby: ${lobby_id}`);
-        set_is_exiting(true); // Set exit state
+        set_is_exiting(true);
         if (socket && lobby_id) {
             socket.emit("leave_lobby", { lobby_id });
         }
@@ -75,8 +80,9 @@ export default function Lobby() {
     };
 
     const handle_start_game = () => {
-        console.log(`Starting game in lobby: ${lobby_id}`);
+        set_is_starting_game(true); // lock immediately
         if (socket && lobby_id) {
+            set_is_starting_game(true); // 🆕 lock the button
             socket.emit("start_game", { lobby_id });
         }
     };
@@ -93,22 +99,25 @@ export default function Lobby() {
                     <li key={player.firebase_uid} className="text-gray-700">
                         {player.name}{" "}
                         {player.firebase_uid === host_id ? "(Host)" : ""}
-                        {player.socket_id === socket.id ? " (You)" : ""}
+                        {player.socket_id === socket?.id ? " (You)" : ""}
                         {player.is_ready ? " (Ready)" : ""}
                     </li>
                 ))}
             </ul>
+
             <button
                 onClick={handle_exit}
                 className="mt-4 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600"
             >
                 Exit Lobby
             </button>
+
             <button
                 onClick={handle_start_game}
-                className="mt-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600"
+                disabled={is_starting_game}
+                className="mt-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed"
             >
-                Start Game
+                {is_starting_game ? "Starting..." : "Start Game"}
             </button>
 
             <Lobby_Chat is_connected={is_connected} />
