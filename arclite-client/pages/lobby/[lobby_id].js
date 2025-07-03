@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useStore } from "zustand";
 import Socket_Store from "../../states/Socket_Store.js";
 import Lobby_Store from "../../states/Lobby_Store.js";
+import User_Store from "../../states/User_Store.js";
 import Lobby_Chat from "../../components/Lobby_Chat.js";
-import Global_Chat from "../../components/Global_Chat.js";
+import Host_Options from "../../components/Host_Options.js"; // ✅ New import
 
 export default function Lobby() {
     const router = useRouter();
@@ -14,10 +15,13 @@ export default function Lobby() {
     const players = useStore(Lobby_Store, (state) => state.players);
     const set_host_id = useStore(Lobby_Store, (state) => state.set_host_id);
     const set_players = useStore(Lobby_Store, (state) => state.set_players);
+    const is_host = useStore(User_Store, (state) => state.is_host);
+    const set_is_host = useStore(User_Store, (state) => state.set_is_host);
 
+    const player_uid = useStore(User_Store, (state) => state.firebase_uid);
     const [is_exiting, set_is_exiting] = useState(false);
     const [is_connected, set_is_connected] = useState(!!socket);
-    const [is_starting_game, set_is_starting_game] = useState(false); // 🆕 added
+
 
     useEffect(() => {
         if (!socket || !lobby_id) {
@@ -38,17 +42,19 @@ export default function Lobby() {
             );
             set_players(players);
             set_host_id(host_id);
+            if (host_id === socket.id) {
+                console.log(`You are now the host of lobby: ${lobby_id}`);
+                set_is_host(true);
+            }
         });
 
         socket.on("game_started", () => {
             console.log(`Game started in lobby: ${lobby_id}`);
-            set_is_starting_game(false); // 🆕 reset start flag
             router.push(`/game/${lobby_id}`);
         });
 
         socket.on("error", (message) => {
             console.error(`Lobby error: ${message}`);
-            set_is_starting_game(false); // 🆕 reset on error
             router.push("/");
             alert(message);
         });
@@ -79,14 +85,6 @@ export default function Lobby() {
         });
     };
 
-    const handle_start_game = () => {
-        set_is_starting_game(true); // lock immediately
-        if (socket && lobby_id) {
-            set_is_starting_game(true); // 🆕 lock the button
-            socket.emit("start_game", { lobby_id });
-        }
-    };
-
     return (
         <div className="flex flex-col items-center p-6 min-h-screen bg-gray-100">
             <h1 className="text-3xl font-bold text-blue-600">
@@ -104,24 +102,14 @@ export default function Lobby() {
                     </li>
                 ))}
             </ul>
-
             <button
                 onClick={handle_exit}
                 className="mt-4 px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600"
             >
                 Exit Lobby
             </button>
-
-            <button
-                onClick={handle_start_game}
-                disabled={is_starting_game}
-                className="mt-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed"
-            >
-                {is_starting_game ? "Starting..." : "Start Game"}
-            </button>
-
+            {is_host && <Host_Options />} {/* ✅ host-only controls */}
             <Lobby_Chat is_connected={is_connected} />
-            <Global_Chat />
         </div>
     );
 }

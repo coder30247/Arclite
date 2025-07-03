@@ -8,5 +8,6 @@ export function socket_handler(io) {
 
     io.on("connection", (socket) => {
         auth_handler(io, socket, player_manager, lobby_manager);
+        socket.on("ping_check", (cb) => cb());
     });
 }

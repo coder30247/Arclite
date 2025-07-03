@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Socket_Store from "../../states/Socket_Store.js";
 import User_Store from "../../states/User_Store.js";
 import Lobby_Store from "../../states/Lobby_Store.js";
+import Auth_Store from "../../states/Auth_Store.js";
 
 export default function Create_Lobby_Button() {
     const [error, set_error] = useState(null);
@@ -13,6 +14,7 @@ export default function Create_Lobby_Button() {
     const set_host_id = Lobby_Store((state) => state.set_host_id);
     const set_lobby_id = Lobby_Store((state) => state.set_lobby_id);
     const set_players = Lobby_Store((state) => state.set_players);
+    const set_is_host = User_Store((state) => state.set_is_host);
 
     useEffect(() => {
         console.log("Create_Lobby_Button state:", {
@@ -57,6 +59,8 @@ export default function Create_Lobby_Button() {
             );
             set_lobby_id(lobby_id);
             set_host_id(firebase_uid);
+            set_is_host(true);
+
             set_players([
                 { firebase_uid: firebase_uid, name: username, is_host: true },
             ]);
