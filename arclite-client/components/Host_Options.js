@@ -3,12 +3,14 @@ import { useStore } from "zustand";
 import { useState } from "react";
 import Socket_Store from "../states/Socket_Store";
 import Lobby_Store from "../states/Lobby_Store";
+import Auth_Store from "../states/Auth_Store";
 
 export default function Host_Options() {
     const router = useRouter();
     const { lobby_id } = router.query;
     const socket = useStore(Socket_Store, (state) => state.socket);
-    const host_id = useStore(Lobby_Store, (state) => state.host_id);
+    
+    const firebase_uid = useStore(Auth_Store, (state) => state.firebase_uid);
     const players = useStore(Lobby_Store, (state) => state.players);
 
     const [is_starting_game, set_is_starting_game] = useState(false);
@@ -51,15 +53,12 @@ export default function Host_Options() {
                 {is_starting_game ? "Starting..." : "Start Game"}
             </button>
 
-            <p className="mb-2 text-sm text-gray-500">Host ID: {host_id}</p>
-
             <div>
                 <h3 className="font-medium text-gray-700 mb-1">Kick Players</h3>
                 <ul className="space-y-1">
                     {players.map((player) => {
-                        const is_host = player.firebase_uid === host_id;
-                        const is_self = player.socket_id === socket?.id;
-                        if (is_host || is_self) return null;
+                        const is_self = player.firebase_uid === firebase_uid;
+                        if (is_self) return null;
 
                         return (
                             <li

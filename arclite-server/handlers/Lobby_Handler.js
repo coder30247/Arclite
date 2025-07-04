@@ -1,5 +1,5 @@
 export function lobby_handler(io, socket, player_manager, lobby_manager) {
-    socket.on("create_lobby", ({ lobby_id, username, max_players }) => {
+    socket.on("create_lobby", ({ lobby_id, username }) => {
         const firebase_uid = socket.firebase_uid;
 
         if (!firebase_uid) {
@@ -28,11 +28,10 @@ export function lobby_handler(io, socket, player_manager, lobby_manager) {
         }
 
         try {
-            const max = Number(max_players) || 4;
             lobby_manager.create_lobby({
                 lobby_id,
                 host_player: player,
-                max_players: max,
+                max_players: 4,
             });
 
             console.log(`🏠 lobby created: ${lobby_id} by ${firebase_uid}`);
@@ -149,7 +148,9 @@ export function lobby_handler(io, socket, player_manager, lobby_manager) {
             console.log(`👋 ${firebase_uid} left lobby ${lobby_id}`);
 
             // Notify other players in the lobby
-            io.to(lobby_id).emit("player:remove", { firebase_uid: firebase_uid });
+            io.to(lobby_id).emit("player:remove", {
+                firebase_uid: firebase_uid,
+            });
 
             if (lobby.is_empty()) {
                 console.log(`🗑️ deleting empty lobby: ${lobby_id}`);

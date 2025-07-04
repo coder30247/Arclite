@@ -15,6 +15,7 @@ export default function Create_Lobby_Button() {
     const set_lobby_id = Lobby_Store((state) => state.set_lobby_id);
     const set_players = Lobby_Store((state) => state.set_players);
     const set_is_host = User_Store((state) => state.set_is_host);
+    const set_firebase_uid = Auth_Store((state) => state.set_firebase_uid);
 
     useEffect(() => {
         console.log("Create_Lobby_Button state:", {
@@ -59,10 +60,16 @@ export default function Create_Lobby_Button() {
             );
             set_lobby_id(lobby_id);
             set_host_id(firebase_uid);
+            set_firebase_uid(firebase_uid); // Store Firebase UID
             set_is_host(true);
 
             set_players([
-                { firebase_uid: firebase_uid, name: username, is_host: true },
+                {
+                    firebase_uid: firebase_uid,
+                    name: username,
+                    is_host: true,
+                    is_ready: false,
+                },
             ]);
             router.push(`/lobby/${lobby_id}`);
         };

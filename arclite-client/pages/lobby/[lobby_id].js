@@ -4,6 +4,8 @@ import { useStore } from "zustand";
 import Socket_Store from "../../states/Socket_Store.js";
 import Lobby_Store from "../../states/Lobby_Store.js";
 import User_Store from "../../states/User_Store.js";
+import Auth_Store from "../../states/Auth_Store.js";
+
 import Lobby_Chat from "../../components/Lobby_Chat.js";
 import Host_Options from "../../components/Host_Options.js"; // ✅ New import
 
@@ -11,17 +13,18 @@ export default function Lobby() {
     const router = useRouter();
     const { lobby_id } = router.query;
     const socket = useStore(Socket_Store, (state) => state.socket);
+
     const host_id = useStore(Lobby_Store, (state) => state.host_id);
     const players = useStore(Lobby_Store, (state) => state.players);
     const set_host_id = useStore(Lobby_Store, (state) => state.set_host_id);
     const set_players = useStore(Lobby_Store, (state) => state.set_players);
+
     const is_host = useStore(User_Store, (state) => state.is_host);
     const set_is_host = useStore(User_Store, (state) => state.set_is_host);
+    const player_uid = useStore(Auth_Store, (state) => state.firebase_uid);
 
-    const player_uid = useStore(User_Store, (state) => state.firebase_uid);
     const [is_exiting, set_is_exiting] = useState(false);
     const [is_connected, set_is_connected] = useState(!!socket);
-
 
     useEffect(() => {
         if (!socket || !lobby_id) {
@@ -90,15 +93,14 @@ export default function Lobby() {
             <h1 className="text-3xl font-bold text-blue-600">
                 Lobby: {lobby_id}
             </h1>
-            <p className="text-gray-600">Host ID: {host_id}</p>
             <h2 className="text-xl font-semibold mt-4">Players in Lobby</h2>
             <ul className="list-disc pl-6 mt-2">
                 {players.map((player) => (
                     <li key={player.firebase_uid} className="text-gray-700">
                         {player.name}{" "}
                         {player.firebase_uid === host_id ? "(Host)" : ""}
-                        {player.socket_id === socket?.id ? " (You)" : ""}
-                        {player.is_ready ? " (Ready)" : ""}
+                        {player.firebase_uid === player_uid ? " (You)" : ""}
+                        {player.is_ready ? "Player ready" : "Player not ready"}
                     </li>
                 ))}
             </ul>
