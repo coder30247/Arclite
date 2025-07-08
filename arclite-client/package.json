@@ -10,12 +10,12 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "firebase": "^11.9.1",
+        "firebase": "^11.0.1",
         "lodash": "^4.17.21",
-        "next": "15.3.4",
+        "next": "15.0.4",
         "phaser": "^3.60.0",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
         "react-window": "^1.8.11",
         "socket.io-client": "^4.8.1",
         "zustand": "^5.0.5"
@@ -31,8 +31,12 @@
     "license": "MIT",
     "description": "Frontend for Arclite — a real-time multiplayer web game",
     "devDependencies": {
-        "@tailwindcss/postcss": "^4.1.10",
-        "postcss": "^8.5.6",
-        "tailwindcss": "^4.1.10"
+        "tailwindcss": "^4.1.10",
+        "postcss": "^8.4.47",
+        "autoprefixer": "^10.4.20",
+        "lightningcss": "^1.27.0"
+    },
+    "resolutions": {
+        "lightningcss": "^1.27.0"
     }
 }
