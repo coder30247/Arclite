@@ -12,7 +12,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: process.env.ALLOWED_CLIENT_ORIGIN,
+        origin: [process.env.ALLOWED_CLIENT_ORIGIN,"http://localhost:3000"],
         methods: ["GET", "POST"],
     },
     pingTimeout: 5000,
