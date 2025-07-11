@@ -31,10 +31,11 @@
     "license": "MIT",
     "description": "Frontend for Arclite — a real-time multiplayer web game",
     "devDependencies": {
-        "tailwindcss": "^4.1.10",
-        "postcss": "^8.4.47",
+        "@tailwindcss/postcss": "^4.1.11",
         "autoprefixer": "^10.4.20",
-        "lightningcss": "^1.27.0"
+        "lightningcss": "^1.27.0",
+        "postcss": "^8.4.47",
+        "tailwindcss": "^4.1.10"
     },
     "resolutions": {
         "lightningcss": "^1.27.0"
