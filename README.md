@@ -4,6 +4,8 @@
 
 Live Demo 👉 [arclite.vercel.app](https://arclite.vercel.app)
 
+backend is in render and it is made as serverless, so please waiting for sometime and refresh to connect to the server
+
 Arclite is a real-time multiplayer 2D shooter game built with **Phaser**, **Socket.IO**, and **React**. Inspired by classics like *Mini Militia* and *Soldat*, this game combines fast-paced combat with smooth animations and real-time sync between players.
 
 ---
