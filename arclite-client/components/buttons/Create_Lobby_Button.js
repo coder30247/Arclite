@@ -8,6 +8,7 @@ import Auth_Store from "../../states/Auth_Store.js";
 export default function Create_Lobby_Button() {
     const [error, set_error] = useState(null);
     const [is_creating, set_is_creating] = useState(false); // ⬅️ Added state
+    
     const router = useRouter();
     const socket = Socket_Store((state) => state.socket);
     const username = User_Store((state) => state.username);

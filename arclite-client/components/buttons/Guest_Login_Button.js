@@ -1,5 +1,5 @@
 import { signInAnonymously } from "firebase/auth";
-import { auth } from "../../lib/Firebase.js";
+import { firebase_auth } from "../../lib/Firebase.js";
 
 export default function Guest_Login_Button({
     loading,
@@ -10,9 +10,10 @@ export default function Guest_Login_Button({
         if (loading) return;
         set_loading(true);
         set_login_error(null);
+
         try {
             console.log("Attempting guest login");
-            const result = await signInAnonymously(auth);
+            const result = await signInAnonymously(firebase_auth);
             console.log(
                 `Guest login successful: ${result.user.uid}, isAnonymous: ${result.user.isAnonymous}`
             );

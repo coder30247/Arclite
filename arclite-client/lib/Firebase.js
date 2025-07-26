@@ -1,18 +1,31 @@
+// firebase.js
 import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, inMemoryPersistence } from "firebase/auth";
+import {
+    getAuth,
+    setPersistence,
+    browserSessionPersistence,
+} from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-  appId: process.env.NEXT_PUBLIC_APP_ID,
+// config
+const firebase_config = {
+    apiKey: process.env.NEXT_PUBLIC_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
+    appId: process.env.NEXT_PUBLIC_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// initialize firebase
+const firebase_app = initializeApp(firebase_config);
+const firebase_auth = getAuth(firebase_app);
 
-setPersistence(auth, inMemoryPersistence)
-  .then(() => console.log("✅ Firebase inMemory persistence set"))
-  .catch((error) => console.error("❌ Persistence error:", error));
+// initialize persistence
+const init_firebase_auth = async () => {
+    try {
+        await setPersistence(firebase_auth, browserSessionPersistence);
+        console.log("✅ firebase session persistence set");
+    } catch (error) {
+        console.error("❌ firebase persistence error:", error);
+    }
+};
 
-export { auth };
+export { firebase_auth, init_firebase_auth };

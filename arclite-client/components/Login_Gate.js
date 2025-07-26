@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { auth } from "../lib/Firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import { io } from "socket.io-client";
+
+import { firebase_auth } from "../lib/Firebase.js";
 
 import Auth_Store from "../states/Auth_Store.js";
 import Socket_Store from "../states/Socket_Store.js";
@@ -24,10 +25,11 @@ const initialize_socket = (current_user, socket_ref) => {
         );
         return socket_ref.current;
     }
+
     console.log(`Initializing Socket.IO for user: ${current_user.uid}`);
     socket_ref.current = io(process.env.NEXT_PUBLIC_SOCKET_SERVER, {
         autoConnect: true,
-        reconnection: false,
+        reconnection: true,
     });
 
     socket_ref.current.on("connect", () => {
@@ -37,19 +39,24 @@ const initialize_socket = (current_user, socket_ref) => {
         const username =
             current_user.displayName ||
             (current_user.isAnonymous ? "Guest" : "User");
+
         socket_ref.current.emit("auth", {
             firebase_uid: current_user.uid,
             username,
         });
-        set_username(username); // Set username in User_Store
+
+        set_username(username);
         set_connected(true);
     });
+
     socket_ref.current.on("error", (message) => {
         console.error(`Socket error: ${message}`);
     });
+
     socket_ref.current.on("connect_error", (error) => {
         console.error(`Socket connect error: ${error.message}`);
     });
+
     socket_ref.current.on("disconnect", (reason) => {
         console.log(
             `Socket disconnected: ${socket_ref.current?.id}, reason: ${reason}`
@@ -58,6 +65,7 @@ const initialize_socket = (current_user, socket_ref) => {
         set_socket(null);
         set_connected(false);
     });
+
     set_socket(socket_ref.current);
     return socket_ref.current;
 };
@@ -67,12 +75,10 @@ export { initialize_socket };
 export default function Login_Gate({ children }) {
     const firebase_uid = Auth_Store((state) => state.firebase_uid);
     const set_firebase_uid = Auth_Store((state) => state.set_firebase_uid);
-    const set_is_authenticated = Auth_Store(
-        (state) => state.set_is_authenticated
-    );
     const reset_auth = Auth_Store((state) => state.reset_auth);
     const reset_socket = Socket_Store((state) => state.reset_socket);
     const reset_user = User_Store((state) => state.reset_user);
+
     const [loading, set_loading] = useState(true);
     const [login_error, set_login_error] = useState(null);
     const socket_ref = useRef(null);
@@ -80,7 +86,7 @@ export default function Login_Gate({ children }) {
     useEffect(() => {
         console.log("Setting up auth listener");
         const unsubscribe = onAuthStateChanged(
-            auth,
+            firebase_auth,
             (current_user) => {
                 console.log(
                     `onAuthStateChanged fired:`,
@@ -91,17 +97,17 @@ export default function Login_Gate({ children }) {
                           }
                         : null
                 );
+
                 if (current_user) {
                     if (!firebase_uid || firebase_uid !== current_user.uid) {
                         set_firebase_uid(current_user.uid);
-                        set_is_authenticated(true);
                         if (!socket_ref.current) {
                             initialize_socket(current_user, socket_ref);
                         }
                     }
                 } else {
                     reset_auth();
-                    reset_user(); // Reset User_Store on logout
+                    reset_user();
                     cleanup_socket();
                 }
                 set_loading(false);
@@ -117,13 +123,7 @@ export default function Login_Gate({ children }) {
             console.log("Cleaning up auth listener");
             unsubscribe();
         };
-    }, [
-        firebase_uid,
-        set_firebase_uid,
-        set_is_authenticated,
-        reset_auth,
-        reset_user,
-    ]);
+    }, [firebase_uid, reset_auth, reset_user]);
 
     const cleanup_socket = () => {
         if (socket_ref.current) {
@@ -153,19 +153,13 @@ export default function Login_Gate({ children }) {
     if (!firebase_uid) {
         return (
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4">
-                {/* Glassy Card Container */}
                 <div className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl rounded-2xl px-8 py-12 w-full max-w-md text-center animate-fade-in">
-                    {/* Title */}
                     <h1 className="text-4xl sm:text-5xl font-extrabold text-cyan-400 drop-shadow-md mb-6 tracking-wider">
                         Welcome to Arclite
                     </h1>
-
-                    {/* Subtitle */}
                     <p className="text-sm sm:text-base text-gray-300 mb-8 tracking-wide">
                         Choose a login method to enter the battle.
                     </p>
-
-                    {/* Buttons */}
                     <div className="flex flex-col sm:flex-row sm:justify-center gap-4 w-full">
                         <Login_Button />
                         <Signup_Button />
