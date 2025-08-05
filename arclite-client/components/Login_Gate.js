@@ -83,27 +83,31 @@ export default function Login_Gate({ children }) {
     const [login_error, set_login_error] = useState(null);
     const socket_ref = useRef(null);
 
+    // In Login_Gate.js
     useEffect(() => {
-        console.log("Setting up auth listener");
+        console.log("🔥 Setting up auth listener");
+
         const unsubscribe = onAuthStateChanged(
             firebase_auth,
             (current_user) => {
-                console.log(
-                    `onAuthStateChanged fired:`,
-                    current_user
+                console.log("🔥 onAuthStateChanged triggered:", {
+                    current_user: current_user
                         ? {
                               uid: current_user.uid,
                               isAnonymous: current_user.isAnonymous,
                           }
-                        : null
-                );
+                        : null,
+                    firebase_auth_current_user: firebase_auth.currentUser
+                        ? {
+                              uid: firebase_auth.currentUser.uid,
+                          }
+                        : null,
+                });
 
                 if (current_user) {
-                    if (!firebase_uid || firebase_uid !== current_user.uid) {
-                        set_firebase_uid(current_user.uid);
-                        if (!socket_ref.current) {
-                            initialize_socket(current_user, socket_ref);
-                        }
+                    set_firebase_uid(current_user.uid);
+                    if (!socket_ref.current) {
+                        initialize_socket(current_user, socket_ref);
                     }
                 } else {
                     reset_auth();
@@ -113,17 +117,24 @@ export default function Login_Gate({ children }) {
                 set_loading(false);
             },
             (error) => {
-                console.error(`onAuthStateChanged error: ${error}`);
+                console.error("🔥 onAuthStateChanged error:", error);
                 set_loading(false);
-                set_login_error(error.message);
             }
         );
 
+        // Debug: Check current auth state immediately
+        console.log("🔥 Initial firebase_auth state:", {
+            current_user: firebase_auth.currentUser
+                ? firebase_auth.currentUser.uid
+                : null,
+            persistence: firebase_auth.persistence,
+        });
+
         return () => {
-            console.log("Cleaning up auth listener");
+            console.log("🔥 Cleaning up auth listener");
             unsubscribe();
         };
-    }, [firebase_uid, reset_auth, reset_user]);
+    }, []);
 
     const cleanup_socket = () => {
         if (socket_ref.current) {

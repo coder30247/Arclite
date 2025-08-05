@@ -1,3 +1,4 @@
+// components/buttons/Guest_Login_Button.js
 import { signInAnonymously } from "firebase/auth";
 import { firebase_auth } from "../../lib/Firebase.js";
 
