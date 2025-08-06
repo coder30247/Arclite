@@ -1,8 +1,8 @@
+// server/models/Player.js
 export default class Player {
-    constructor({ firebase_uid, name, socket_id }) {
+    constructor({ firebase_uid, name }) {
         this.firebase_uid = firebase_uid; // firebase uid
         this.name = name;
-        this.socket_id = socket_id;
         this.is_ready = false;
     }
 
@@ -18,7 +18,4 @@ export default class Player {
         this.is_ready = false;
     }
 
-    update_socket_id(new_socket_id) {
-        this.socket_id = new_socket_id;
-    }
 }

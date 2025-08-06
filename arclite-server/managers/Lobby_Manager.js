@@ -1,10 +1,22 @@
+// server/managers/Lobby_Manager.js
 import Lobby from "../models/Lobby.js";
 export default class Lobby_Manager {
     constructor() {
         this.lobbies = new Map(); // map of lobby id to lobby instance
     }
 
+    is_valid_lobby_id(lobby_id) {
+        return (
+            typeof lobby_id === "string" &&
+            lobby_id.length > 0 &&
+            lobby_id.length <= 50
+        );
+    }
+
     create_lobby({ lobby_id, host_player, max_players = 8, name = "" }) {
+        if (!this.is_valid_lobby_id(lobby_id)) {
+            throw new Error("Invalid lobby ID");
+        }
         if (this.lobbies.has(lobby_id)) {
             throw new Error(`Lobby with ID ${lobby_id} already exists`);
         }

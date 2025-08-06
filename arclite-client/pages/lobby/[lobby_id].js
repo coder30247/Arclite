@@ -1,13 +1,13 @@
+// pages/lobby/[lobby_id].js
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStore } from "zustand";
 import Socket_Store from "../../states/Socket_Store.js";
 import Lobby_Store from "../../states/Lobby_Store.js";
-import User_Store from "../../states/User_Store.js";
 import Auth_Store from "../../states/Auth_Store.js";
 
 import Lobby_Chat from "../../components/Lobby_Chat.js";
-import Host_Options from "../../components/Host_Options.js"; // ✅ New import
+import Host_Options from "../../components/Host_Options.js";
 
 export default function Lobby() {
     const router = useRouter();
@@ -19,8 +19,6 @@ export default function Lobby() {
     const set_host_id = useStore(Lobby_Store, (state) => state.set_host_id);
     const set_players = useStore(Lobby_Store, (state) => state.set_players);
 
-    const is_host = useStore(User_Store, (state) => state.is_host);
-    const set_is_host = useStore(User_Store, (state) => state.set_is_host);
     const player_uid = useStore(Auth_Store, (state) => state.firebase_uid);
 
     const [is_exiting, set_is_exiting] = useState(false);
@@ -45,9 +43,8 @@ export default function Lobby() {
             );
             set_players(players);
             set_host_id(host_id);
-            if (host_id === socket.id) {
+            if (host_id === firebase_uid) {
                 console.log(`You are now the host of lobby: ${lobby_id}`);
-                set_is_host(true);
             }
         });
 
@@ -110,7 +107,8 @@ export default function Lobby() {
             >
                 Exit Lobby
             </button>
-            {is_host && <Host_Options />} {/* ✅ host-only controls */}
+            {player_uid === host_id && <Host_Options />}
+
             <Lobby_Chat is_connected={is_connected} />
         </div>
     );

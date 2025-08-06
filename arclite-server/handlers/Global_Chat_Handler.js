@@ -1,3 +1,4 @@
+// server/handlers/Global_Chat_Handler.js
 export function global_chat_handler(io, socket, player_manager) {
     socket.on("global_chat:send", ({ username, message }) => {
         const firebase_uid = socket.firebase_uid;

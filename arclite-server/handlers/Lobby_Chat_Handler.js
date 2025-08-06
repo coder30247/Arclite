@@ -1,3 +1,4 @@
+// server/handlers/Lobby_Chat_Handler.js
 export function lobby_chat_handler(io, socket, player_manager, lobby_manager) {
     socket.on("lobby_chat:send", ({ lobby_id, username, message }) => {
         const firebase_uid = socket.firebase_uid;

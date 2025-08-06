@@ -1,3 +1,4 @@
+// server/models/Lobby.js
 export default class Lobby {
     constructor(lobby_id, host_player, max_players = 8, name = "") {
         this.lobby_id = lobby_id; // unique lobby identifier
@@ -55,5 +56,23 @@ export default class Lobby {
             throw new Error(`Invalid game state: ${state}`);
         }
         this.game_state = state;
+    }
+
+    // Additional utility methods
+    get_player_count() {
+        return this.players.size;
+    }
+
+    is_full() {
+        return this.players.size >= this.max_players;
+    }
+
+    get_player(firebase_uid) {
+        return this.players.get(firebase_uid);
+    }
+
+    // More efficient player check
+    is_host(firebase_uid) {
+        return this.host_id === firebase_uid;
     }
 }
