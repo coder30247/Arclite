@@ -1,8 +1,11 @@
+// components/Login_Gate.js
+
 import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { io } from "socket.io-client";
 
 import { firebase_auth } from "../lib/Firebase.js";
+import { Initialize_Socket } from "../lib/Initialize_Socket.js";
 
 import Auth_Store from "../states/Auth_Store.js";
 import Socket_Store from "../states/Socket_Store.js";
@@ -11,77 +14,17 @@ import Login_Button from "./buttons/Login_Button.js";
 import Signup_Button from "./buttons/Signup_Button.js";
 import Guest_Login_Button from "./buttons/Guest_Login_Button.js";
 
-const initialize_socket = (current_user, socket_ref) => {
-    const { set_socket, set_connected } = Socket_Store.getState();
-    const { set_username } = User_Store.getState();
-
-    if (!current_user) {
-        console.error("Attempted to initialize socket without user");
-        return null;
-    }
-    if (socket_ref.current) {
-        console.log(
-            `Socket already initialized, skipping: ${socket_ref.current.id}`
-        );
-        return socket_ref.current;
-    }
-
-    console.log(`Initializing Socket.IO for user: ${current_user.uid}`);
-    socket_ref.current = io(process.env.NEXT_PUBLIC_SOCKET_SERVER, {
-        autoConnect: true,
-        reconnection: true,
-    });
-
-    socket_ref.current.on("connect", () => {
-        console.log(
-            `Socket connected: ${current_user.uid}, ${socket_ref.current.id}`
-        );
-        const username =
-            current_user.displayName ||
-            (current_user.isAnonymous ? "Guest" : "User");
-
-        socket_ref.current.emit("auth", {
-            firebase_uid: current_user.uid,
-            username,
-        });
-
-        set_username(username);
-        set_connected(true);
-    });
-
-    socket_ref.current.on("error", (message) => {
-        console.error(`Socket error: ${message}`);
-    });
-
-    socket_ref.current.on("connect_error", (error) => {
-        console.error(`Socket connect error: ${error.message}`);
-    });
-
-    socket_ref.current.on("disconnect", (reason) => {
-        console.log(
-            `Socket disconnected: ${socket_ref.current?.id}, reason: ${reason}`
-        );
-        socket_ref.current = null;
-        set_socket(null);
-        set_connected(false);
-    });
-
-    set_socket(socket_ref.current);
-    return socket_ref.current;
-};
-
-export { initialize_socket };
-
 export default function Login_Gate({ children }) {
     const firebase_uid = Auth_Store((state) => state.firebase_uid);
     const set_firebase_uid = Auth_Store((state) => state.set_firebase_uid);
     const reset_auth = Auth_Store((state) => state.reset_auth);
     const reset_socket = Socket_Store((state) => state.reset_socket);
+    const username = User_Store((state) => state.username);
+    const set_username = User_Store((state) => state.set_username);
     const reset_user = User_Store((state) => state.reset_user);
-
+    const socket = Socket_Store((state) => state.socket);
     const [loading, set_loading] = useState(true);
     const [login_error, set_login_error] = useState(null);
-    const socket_ref = useRef(null);
 
     // In Login_Gate.js
     useEffect(() => {
@@ -90,45 +33,37 @@ export default function Login_Gate({ children }) {
         const unsubscribe = onAuthStateChanged(
             firebase_auth,
             (current_user) => {
-                console.log("🔥 onAuthStateChanged triggered:", {
-                    current_user: current_user
-                        ? {
-                              uid: current_user.uid,
-                              isAnonymous: current_user.isAnonymous,
-                          }
-                        : null,
-                    firebase_auth_current_user: firebase_auth.currentUser
-                        ? {
-                              uid: firebase_auth.currentUser.uid,
-                          }
-                        : null,
-                });
-
                 if (current_user) {
+                    console.log("✅ User logged in:", {
+                        firebase_uid: current_user.uid,
+                        isAnonymous: current_user.isAnonymous,
+                        username: current_user.displayName,
+                    });
+
                     set_firebase_uid(current_user.uid);
-                    if (!socket_ref.current) {
-                        initialize_socket(current_user, socket_ref);
+                    set_username(current_user.displayName || "Guest");
+
+                    if (!socket) {
+                        Initialize_Socket({
+                            firebase_uid: current_user.uid,
+                            username: current_user.displayName || "Guest",
+                        });
                     }
                 } else {
+                    console.log("🚪 User logged out");
                     reset_auth();
                     reset_user();
                     cleanup_socket();
                 }
+
                 set_loading(false);
             },
             (error) => {
-                console.error("🔥 onAuthStateChanged error:", error);
+                console.error("🔥 Auth listener error:", error);
                 set_loading(false);
+                set_login_error(error.message);
             }
         );
-
-        // Debug: Check current auth state immediately
-        console.log("🔥 Initial firebase_auth state:", {
-            current_user: firebase_auth.currentUser
-                ? firebase_auth.currentUser.uid
-                : null,
-            persistence: firebase_auth.persistence,
-        });
 
         return () => {
             console.log("🔥 Cleaning up auth listener");
@@ -137,10 +72,9 @@ export default function Login_Gate({ children }) {
     }, []);
 
     const cleanup_socket = () => {
-        if (socket_ref.current) {
-            console.log(`Cleaning up socket: ${socket_ref.current.id}`);
-            socket_ref.current.disconnect();
-            socket_ref.current = null;
+        if (socket) {
+            console.log(`Cleaning up socket: ${socket.id}`);
+            socket.disconnect();
             reset_socket();
         }
     };

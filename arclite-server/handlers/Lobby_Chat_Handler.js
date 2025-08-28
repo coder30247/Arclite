@@ -1,8 +1,11 @@
-// server/handlers/Lobby_Chat_Handler.js
-export function lobby_chat_handler(io, socket, player_manager, lobby_manager) {
+export default function Lobby_Chat_Handler(
+    io,
+    socket,
+    player_manager,
+    lobby_manager
+) {
     socket.on("lobby_chat:send", ({ lobby_id, username, message }) => {
-        const firebase_uid = socket.firebase_uid;
-
+        const firebase_uid = socket.data?.firebase_uid;
 
         if (
             !firebase_uid ||
@@ -10,7 +13,7 @@ export function lobby_chat_handler(io, socket, player_manager, lobby_manager) {
             typeof message !== "string" ||
             !message.trim()
         ) {
-            socket.emit("error", "Invalid lobby chat input");
+            socket.emit("error", "invalid_lobby_chat_input");
             return;
         }
 
@@ -18,16 +21,15 @@ export function lobby_chat_handler(io, socket, player_manager, lobby_manager) {
         const lobby = lobby_manager.get_lobby(lobby_id);
 
         if (!player || !lobby || !lobby.has_player(firebase_uid)) {
-            socket.emit("error", "Not in this lobby");
+            socket.emit("error", "not_in_lobby");
             return;
         }
 
-        const trimmed_msg = message.trim();
+        const trimmed_message = message.trim();
         player.update_name(username);
 
-        // 📢 Send message only to clients in this lobby
         io.to(lobby_id).emit("lobby_chat:broadcast", {
-            message: trimmed_msg,
+            message: trimmed_message,
             sender: player.name,
             timestamp: Date.now(),
         });

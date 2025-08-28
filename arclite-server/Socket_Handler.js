@@ -1,8 +1,8 @@
 // server/Socket_Handler.js
 import Player_Manager from "./managers/Player_Manager.js";
 import Lobby_Manager from "./managers/Lobby_Manager.js";
+import Auth_Handler from "./handlers/Auth_Handler.js";
 import {
-    auth_handler,
     cleanup_disconnect_timeouts,
 } from "./handlers/Auth_Handler.js";
 
@@ -11,7 +11,7 @@ export function socket_handler(io) {
     const lobby_manager = new Lobby_Manager();
 
     io.on("connection", (socket) => {
-        auth_handler(io, socket, player_manager, lobby_manager);
+        Auth_Handler(io, socket, player_manager, lobby_manager);
         socket.on("ping_check", (cb) => cb());
     });
 
