@@ -1,3 +1,5 @@
+// handlers/Auth_Handler.js
+
 import Player_Manager from "../managers/Player_Manager.js";
 import Lobby_Manager from "../managers/Lobby_Manager.js";
 import Lobby_Handler from "./Lobby_Handler.js";
@@ -5,7 +7,6 @@ import Global_Chat_Handler from "./Global_Chat_Handler.js";
 import Lobby_Chat_Handler from "./Lobby_Chat_Handler.js";
 import Game_Handler from "./Game_Handler.js";
 
-// store pending disconnect timeouts
 const disconnect_timeouts_map = new Map(); // firebase_uid -> timeout_id
 
 export default function Auth_Handler(
@@ -25,7 +26,6 @@ export default function Auth_Handler(
 
     socket.on("auth", ({ firebase_uid, username }) => {
         clearTimeout(auth_timeout_id);
-        console.log(`🔑 auth attempt from: ${socket.id} for firebase_id ${firebase_uid}`)
 
         if (
             !firebase_uid ||
@@ -38,7 +38,7 @@ export default function Auth_Handler(
             return;
         }
 
-        // clear any pending disconnect for this user (reconnection)
+        // Clear pending disconnect (reconnection)
         if (disconnect_timeouts_map.has(firebase_uid)) {
             clearTimeout(disconnect_timeouts_map.get(firebase_uid));
             disconnect_timeouts_map.delete(firebase_uid);
@@ -59,57 +59,65 @@ export default function Auth_Handler(
 
         socket.data.firebase_uid = firebase_uid;
 
-        // register event handlers only after authentication
+        // Register handlers
         Lobby_Handler(io, socket, player_manager, lobby_manager);
         Global_Chat_Handler(io, socket, player_manager);
         Lobby_Chat_Handler(io, socket, player_manager, lobby_manager);
         Game_Handler(io, socket, player_manager, lobby_manager);
+
+        // ✅ Handle explicit logout
+        socket.on("logout", () => {
+            const firebase_uid = socket.data?.firebase_uid;
+            player_manager.remove_player(firebase_uid);
+            socket.data.logout = true; // Mark as logged out
+            socket.disconnect(true);
+        });
     });
 
     socket.on("disconnect", () => {
         const firebase_uid = socket.data?.firebase_uid;
         if (!firebase_uid) return;
 
+        if (socket.data.logout) {
+            console.log(`👋 ${firebase_uid} logged out`)
+            return; // Already handled in "logout" event
+        }
+        
         const timeout_id = setTimeout(() => {
             disconnect_timeouts_map.delete(firebase_uid);
 
             const player = player_manager.get_player(firebase_uid);
             if (!player) {
                 console.log(
-                    `⚠️ disconnect cleanup — player not found: ${firebase_uid}`
+                    `⚠️ player not found during disconnect cleanup: ${firebase_uid}`
                 );
                 return;
             }
 
-            console.log(`⏰ grace period expired for: ${firebase_uid}`);
-
             const lobby_id = socket.data?.lobby_id;
-            if (lobby_id) {
-                const lobby = lobby_manager.get_lobby(lobby_id);
-                if (lobby && lobby.has_player(firebase_uid)) {
-                    lobby_manager.remove_player_from_lobby(lobby_id, player);
-                    console.log(
-                        `👋 ${firebase_uid} removed from lobby ${lobby_id} (grace period expired)`
-                    );
+            const lobby = lobby_id ? lobby_manager.get_lobby(lobby_id) : null;
 
-                    io.to(lobby_id).emit("player:remove", { firebase_uid });
+            if (lobby && lobby.has_player(firebase_uid)) {
+                lobby_manager.remove_player_from_lobby(lobby_id, player);
+                console.log(
+                    `👋 ${firebase_uid} removed from lobby ${lobby_id} (grace expired)`
+                );
 
-                    if (lobby.is_empty()) {
-                        lobby_manager.delete_lobby(lobby_id);
-                        console.log(`🗑️ deleted empty lobby: ${lobby_id}`);
-                    } else {
-                        io.to(lobby_id).emit("update_lobby", {
-                            host_uid: lobby.host_uid,
-                            players: lobby.get_player_list(),
-                        });
-                    }
+                io.to(lobby_id).emit("player:remove", { firebase_uid });
+
+                if (lobby.is_empty()) {
+                    lobby_manager.delete_lobby(lobby_id);
+                    console.log(`🗑️ deleted empty lobby: ${lobby_id}`);
+                } else {
+                    io.to(lobby_id).emit("update_lobby", {
+                        host_uid: lobby.host_uid,
+                        players: lobby.get_player_list(),
+                    });
                 }
             }
 
             player_manager.remove_player(firebase_uid);
-            console.log(
-                `🔌 disconnected: ${firebase_uid} from players list (grace period expired)`
-            );
+            console.log(`🔌 disconnected: ${firebase_uid} (grace expired)`);
         }, 30000);
 
         disconnect_timeouts_map.set(firebase_uid, timeout_id);

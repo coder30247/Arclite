@@ -19,7 +19,6 @@ export default function Login_Gate({ children }) {
     const set_firebase_uid = Auth_Store((state) => state.set_firebase_uid);
     const reset_auth = Auth_Store((state) => state.reset_auth);
     const reset_socket = Socket_Store((state) => state.reset_socket);
-    const username = User_Store((state) => state.username);
     const set_username = User_Store((state) => state.set_username);
     const reset_user = User_Store((state) => state.reset_user);
     const socket = Socket_Store((state) => state.socket);
