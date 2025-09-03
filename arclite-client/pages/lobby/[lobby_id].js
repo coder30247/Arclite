@@ -5,6 +5,9 @@ import { useStore } from "zustand";
 import Socket_Store from "../../states/Socket_Store.js";
 import Lobby_Store from "../../states/Lobby_Store.js";
 import Auth_Store from "../../states/Auth_Store.js";
+import User_Store from "../../states/User_Store.js";
+
+import { Initialize_Socket } from "../../lib/Initialize_Socket.js";
 
 import Lobby_Chat from "../../components/Lobby_Chat.js";
 import Host_Options from "../../components/Host_Options.js";
@@ -20,21 +23,32 @@ export default function Lobby() {
     const set_players = useStore(Lobby_Store, (state) => state.set_players);
 
     const player_uid = useStore(Auth_Store, (state) => state.firebase_uid);
+    const username = useStore(User_Store, (state) => state.username);
 
     const [is_exiting, set_is_exiting] = useState(false);
-    const [is_connected, set_is_connected] = useState(!!socket);
 
     useEffect(() => {
-        if (!socket || !lobby_id) {
-            set_is_connected(false);
+        if (!router.isReady) return;
+        if (!player_uid && !username) {
+            console.log("No player UID found, redirecting to home.");
+            router.push("/");
+            return;
+        }
+        if (!socket) {
+            console.log(
+                `Socket not initialized. Initializing now...${player_uid}`
+            );
+            Initialize_Socket({
+                firebase_uid: player_uid,
+                username: username,
+            });
             return;
         }
 
         console.log(`Joining lobby: ${lobby_id}`);
 
-        socket.on("connect", () => set_is_connected(true));
-        socket.on("disconnect", () => set_is_connected(false));
-        socket.on("connect_error", () => set_is_connected(false));
+        // socket.on("disconnect", () => set_is_connected(false));
+        // socket.on("connect_error", () => set_is_connected(false));
 
         socket.on("update_lobby", ({ host_id, players }) => {
             console.log(`Host updated: ${host_id}`);
@@ -43,7 +57,7 @@ export default function Lobby() {
             );
             set_players(players);
             set_host_id(host_id);
-            if (host_id === firebase_uid) {
+            if (host_id === player_uid) {
                 console.log(`You are now the host of lobby: ${lobby_id}`);
             }
         });
@@ -109,7 +123,7 @@ export default function Lobby() {
             </button>
             {player_uid === host_id && <Host_Options />}
 
-            <Lobby_Chat is_connected={is_connected} />
+            {/* <Lobby_Chat /> */}
         </div>
     );
 }

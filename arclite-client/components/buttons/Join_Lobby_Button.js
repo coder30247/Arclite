@@ -19,13 +19,13 @@ export default function Join_Lobby_Button() {
                 lobby_id: lobby_id_input,
                 username: username,
             });
-            socket.on("joined_lobby", ({ lobby_id, host_id, players }) => {
+            socket.once("joined_lobby", ({ lobby_id, host_id, players }) => {
                 set_lobby_id(lobby_id);
                 set_players(players);
                 set_host_id(host_id);
                 router.push(`/lobby/${lobby_id}`);
             });
-            socket.on("error", (message) => {
+            socket.once("error", (message) => {
                 alert(`Error: ${message}`);
             });
         } else {

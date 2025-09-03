@@ -38,5 +38,4 @@ export function Initialize_Socket({ firebase_uid, username }) {
     });
 
     set_socket(new_socket);
-    return new_socket;
 }
