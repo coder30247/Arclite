@@ -15,11 +15,24 @@ import Host_Options from "../../components/Host_Options.js";
 export default function Lobby() {
     const router = useRouter();
     const { lobby_id } = router.query;
+
+    // 🚨 GET HYDRATION STATUS — NO EXTRA VARIABLES, PURE ZUSTAND API
+    const is_auth_hydrated = Auth_Store.persist.hasHydrated();
+    const is_lobby_hydrated = Lobby_Store.persist.hasHydrated();
+    const is_user_hydrated = User_Store.persist.hasHydrated();
+
+    // ✅ ONLY PROCEED WHEN ROUTER + ALL STORES ARE READY
+    const is_ready =
+        router.isReady &&
+        is_auth_hydrated &&
+        is_lobby_hydrated &&
+        is_user_hydrated;
+
     const socket = useStore(Socket_Store, (state) => state.socket);
 
-    const host_id = useStore(Lobby_Store, (state) => state.host_id);
+    const host_uid = useStore(Lobby_Store, (state) => state.host_uid);
     const players = useStore(Lobby_Store, (state) => state.players);
-    const set_host_id = useStore(Lobby_Store, (state) => state.set_host_id);
+    const set_host_uid = useStore(Lobby_Store, (state) => state.set_host_uid);
     const set_players = useStore(Lobby_Store, (state) => state.set_players);
 
     const player_uid = useStore(Auth_Store, (state) => state.firebase_uid);
@@ -28,36 +41,41 @@ export default function Lobby() {
     const [is_exiting, set_is_exiting] = useState(false);
 
     useEffect(() => {
-        if (!router.isReady) return;
-        if (!player_uid && !username) {
-            console.log("No player UID found, redirecting to home.");
+        if (!is_ready) return; // ⬅️ GUARD: wait for router + all stores
+
+        // 🔍 Now safe — persisted values are loaded
+        if (!player_uid || !username) {
+            console.log(
+                "No player UID or username found, redirecting to home."
+            );
             router.push("/");
             return;
         }
+
         if (!socket) {
             console.log(
-                `Socket not initialized. Initializing now...${player_uid}`
+                `Socket not initialized. Initializing now... UID: ${player_uid}`
             );
-            Initialize_Socket({
-                firebase_uid: player_uid,
-                username: username,
-            });
+            Initialize_Socket();
+            return;
+        }
+
+        if (!lobby_id) {
+            console.warn("No lobby_id in query, redirecting...");
+            router.push("/");
             return;
         }
 
         console.log(`Joining lobby: ${lobby_id}`);
 
-        // socket.on("disconnect", () => set_is_connected(false));
-        // socket.on("connect_error", () => set_is_connected(false));
-
-        socket.on("update_lobby", ({ host_id, players }) => {
-            console.log(`Host updated: ${host_id}`);
+        socket.on("update_lobby", ({ host_uid, players }) => {
+            console.log(`Host updated: ${host_uid}`);
             console.log(
                 `Received lobby update: players=${JSON.stringify(players)}`
             );
             set_players(players);
-            set_host_id(host_id);
-            if (host_id === player_uid) {
+            set_host_uid(host_uid);
+            if (host_uid === player_uid) {
                 console.log(`You are now the host of lobby: ${lobby_id}`);
             }
         });
@@ -85,19 +103,28 @@ export default function Lobby() {
                 socket.emit("leave_lobby", { lobby_id });
             }
         };
-    }, [socket, lobby_id, set_host_id, set_players, router]);
+    }, [is_ready, socket, lobby_id, set_host_uid, set_players, router, player_uid]);
 
     const handle_exit = () => {
         console.log(`Exiting lobby: ${lobby_id}`);
         set_is_exiting(true);
         if (socket && lobby_id) {
             socket.emit("leave_lobby", { lobby_id });
+            socket.once("left_lobby", () => {
+                console.log(`Left lobby: ${lobby_id}`);
+                router.push("/");
+            });
         }
-        socket.on("left_lobby", () => {
-            console.log(`Left lobby: ${lobby_id}`);
-            router.push("/");
-        });
     };
+
+    // 🧊 Optional: Show loading while hydrating or router loading
+    if (!is_ready) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                <p className="text-lg text-gray-600">Loading lobby...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col items-center p-6 min-h-screen bg-gray-100">
@@ -109,9 +136,9 @@ export default function Lobby() {
                 {players.map((player) => (
                     <li key={player.firebase_uid} className="text-gray-700">
                         {player.name}{" "}
-                        {player.firebase_uid === host_id ? "(Host)" : ""}
+                        {player.firebase_uid === host_uid ? "(Host)" : ""}
                         {player.firebase_uid === player_uid ? " (You)" : ""}
-                        {player.is_ready ? "Player ready" : "Player not ready"}
+                        {player.is_ready ? " ✅ Ready" : " ⏳ Not Ready"}
                     </li>
                 ))}
             </ul>
@@ -121,8 +148,7 @@ export default function Lobby() {
             >
                 Exit Lobby
             </button>
-            {player_uid === host_id && <Host_Options />}
-
+            {player_uid === host_uid && <Host_Options />}
             {/* <Lobby_Chat /> */}
         </div>
     );

@@ -43,10 +43,7 @@ export default function Login_Gate({ children }) {
                     set_username(current_user.displayName || "Guest");
 
                     if (!socket) {
-                        Initialize_Socket({
-                            firebase_uid: current_user.uid,
-                            username: current_user.displayName || "Guest",
-                        });
+                        Initialize_Socket();
                     }
                 } else {
                     console.log("🚪 User logged out");

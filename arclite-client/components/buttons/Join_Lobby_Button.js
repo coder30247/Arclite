@@ -10,7 +10,7 @@ export default function Join_Lobby_Button() {
     const username = User_Store((state) => state.username);
     const set_lobby_id = Lobby_Store((state) => state.set_lobby_id);
     const set_players = Lobby_Store((state) => state.set_players);
-    const set_host_id = Lobby_Store((state) => state.set_host_id);
+    const set_host_uid = Lobby_Store((state) => state.set_host_uid);
     const router = useRouter();
 
     const handle_join_lobby = () => {
@@ -19,10 +19,10 @@ export default function Join_Lobby_Button() {
                 lobby_id: lobby_id_input,
                 username: username,
             });
-            socket.once("joined_lobby", ({ lobby_id, host_id, players }) => {
+            socket.once("joined_lobby", ({ lobby_id, host_uid, players }) => {
                 set_lobby_id(lobby_id);
                 set_players(players);
-                set_host_id(host_id);
+                set_host_uid(host_uid);
                 router.push(`/lobby/${lobby_id}`);
             });
             socket.once("error", (message) => {

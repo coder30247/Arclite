@@ -6,7 +6,7 @@ export default function Lobby_Handler(
 ) {
     socket.on("create_lobby", ({ lobby_id, username }) => {
         const firebase_uid = socket.data?.firebase_uid;
-
+        socket.data.lobby_id = lobby_id;
         if (!firebase_uid) {
             socket.emit("error", "unauthorized");
             return;
@@ -45,6 +45,7 @@ export default function Lobby_Handler(
 
     socket.on("join_lobby", ({ lobby_id, username }) => {
         const firebase_uid = socket.data?.firebase_uid;
+        socket.data.lobby_id = lobby_id;
 
         if (!firebase_uid) {
             socket.emit("error", "unauthorized");

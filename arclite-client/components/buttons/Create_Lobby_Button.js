@@ -12,7 +12,7 @@ export default function Create_Lobby_Button() {
     const router = useRouter();
     const socket = Socket_Store((state) => state.socket);
     const username = User_Store((state) => state.username);
-    const set_host_id = Lobby_Store((state) => state.set_host_id);
+    const set_host_uid = Lobby_Store((state) => state.set_host_uid);
     const set_lobby_id = Lobby_Store((state) => state.set_lobby_id);
     const set_players = Lobby_Store((state) => state.set_players);
     const set_firebase_uid = Auth_Store((state) => state.set_firebase_uid);
@@ -59,7 +59,7 @@ export default function Create_Lobby_Button() {
                 `Lobby created: ${lobby_id}, for user: ${firebase_uid}`
             );
             set_lobby_id(lobby_id);
-            set_host_id(firebase_uid);
+            set_host_uid(firebase_uid);
             set_firebase_uid(firebase_uid); // Store Firebase UID
 
             set_players([

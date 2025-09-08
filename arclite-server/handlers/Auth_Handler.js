@@ -24,7 +24,7 @@ export default function Auth_Handler(
         }
     }, 5000);
 
-    socket.on("auth", ({ firebase_uid, username }) => {
+    socket.on("auth", ({ firebase_uid, username, lobby_id }) => {
         clearTimeout(auth_timeout_id);
 
         if (
@@ -38,6 +38,10 @@ export default function Auth_Handler(
             return;
         }
 
+        socket.data.firebase_uid = firebase_uid;
+        socket.data.username = username;
+        socket.data.lobby_id = lobby_id || null;
+
         // Clear pending disconnect (reconnection)
         if (disconnect_timeouts_map.has(firebase_uid)) {
             clearTimeout(disconnect_timeouts_map.get(firebase_uid));
@@ -48,6 +52,21 @@ export default function Auth_Handler(
         const existing_player = player_manager.get_player(firebase_uid);
         if (existing_player) {
             console.log(`🔁 reconnected: ${firebase_uid}`);
+
+            // if the player was in a lobby, rejoin the socket room
+            if (socket.data.lobby_id) {
+                socket.join(socket.data.lobby_id);
+                console.log(
+                    `🔁 re-joined lobby: ${socket.data.lobby_id} for ${firebase_uid}`
+                );
+                const lobby = lobby_manager.get_lobby(socket.data.lobby_id);
+                if (lobby) {
+                    io.to(socket.data.lobby_id).emit("update_lobby", {
+                        host_uid: lobby.host_uid,
+                        players: lobby.get_player_list(),
+                    });
+                }
+            }
         } else {
             player_manager.add_player({
                 firebase_uid,
@@ -56,8 +75,6 @@ export default function Auth_Handler(
             });
             console.log(`✅ new player: ${firebase_uid}`);
         }
-
-        socket.data.firebase_uid = firebase_uid;
 
         // Register handlers
         Lobby_Handler(io, socket, player_manager, lobby_manager);
@@ -79,10 +96,10 @@ export default function Auth_Handler(
         if (!firebase_uid) return;
 
         if (socket.data.logout) {
-            console.log(`👋 ${firebase_uid} logged out`)
+            console.log(`👋 ${firebase_uid} logged out`);
             return; // Already handled in "logout" event
         }
-        
+
         const timeout_id = setTimeout(() => {
             disconnect_timeouts_map.delete(firebase_uid);
 
