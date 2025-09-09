@@ -6,13 +6,15 @@ import Logout_Button from "../components/buttons/Logout_Button.js";
 import User_Store from "../states/User_Store.js";
 import Global_Chat from "../components/Global_Chat";
 
+import Block_Routing from "../lib/Block_Routing.js";
+
 function Home_Content() {
     const username = User_Store((state) => state.username);
     const set_username = User_Store((state) => state.set_username);
+    Block_Routing();
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4">
-
             <h1 className="text-5xl font-extrabold text-cyan-400 drop-shadow-lg mb-4">
                 Arclite
             </h1>

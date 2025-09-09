@@ -8,6 +8,7 @@ import Auth_Store from "../../states/Auth_Store.js";
 import User_Store from "../../states/User_Store.js";
 
 import { Initialize_Socket } from "../../lib/Initialize_Socket.js";
+import Block_Routing from "../../lib/Block_Routing.js";
 
 import Lobby_Chat from "../../components/Lobby_Chat.js";
 import Host_Options from "../../components/Host_Options.js";
@@ -40,6 +41,7 @@ export default function Lobby() {
 
     const [is_exiting, set_is_exiting] = useState(false);
 
+    Block_Routing();
     useEffect(() => {
         if (!is_ready) return; // ⬅️ GUARD: wait for router + all stores
 
@@ -103,7 +105,15 @@ export default function Lobby() {
                 socket.emit("leave_lobby", { lobby_id });
             }
         };
-    }, [is_ready, socket, lobby_id, set_host_uid, set_players, router, player_uid]);
+    }, [
+        is_ready,
+        socket,
+        lobby_id,
+        set_host_uid,
+        set_players,
+        router,
+        player_uid,
+    ]);
 
     const handle_exit = () => {
         console.log(`Exiting lobby: ${lobby_id}`);

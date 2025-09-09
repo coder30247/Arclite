@@ -1,10 +1,11 @@
 // pages/game/[room_id].js
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+import { useStore } from "zustand";
 
 import Ping from "../../components/Ping.js"; // adjust the path
+import Block_Routing from "../../lib/Block_Routing.js";
 
-import { useStore } from "zustand";
 import Socket_Store from "../../states/Socket_Store.js";
 
 const Game_Canvas = dynamic(() => import("../../components/Game_Canvas"), {
@@ -13,7 +14,7 @@ const Game_Canvas = dynamic(() => import("../../components/Game_Canvas"), {
 
 export default function Game_Page() {
     const { room_id } = useRouter().query;
-
+    Block_Routing();
     // Ensure the socket is initialized before using it
     const socket = useStore(Socket_Store, (state) => state.socket);
     const ping = Ping(socket);
