@@ -1,7 +1,7 @@
 import { firebase_auth } from "../lib/Firebase.jsx";
 import { signInAnonymously } from "firebase/auth";
-import Auth_Store from "../Stores/Auth_Store.jsx";
-import Stage_Store from "../Stores/Stage_Store.jsx";
+import Auth_Store from "../stores/Auth_Store.jsx";
+import Stage_Store from "../stores/Stage_Store.jsx";
 
 export default function Authentication_Stage() {
     const firebase_uid = Auth_Store((state) => state.firebase_uid);

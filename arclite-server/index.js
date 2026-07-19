@@ -5,7 +5,7 @@ import http from "http";
 import "dotenv/config";
 
 import { Server } from "socket.io";
-import { socket_handler } from "./Socket_Handler.js"; // Ensure this file also uses ESM syntax
+import { socket_handler } from "./handlers/Socket_Handler.js"; // Ensure this file also uses ESM syntax
 
 const app = express();
 const server = http.createServer(app);

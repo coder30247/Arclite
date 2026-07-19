@@ -1,7 +1,6 @@
 # Ignore node_modules directory
 arclite-client/node_modules
-arclite-client/.next
-arclite-client/.env.local
+arclite-client/.env
 
 arclite-server/node_modules
 arclite-server/.env

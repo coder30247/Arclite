@@ -1,6 +1,6 @@
-import Authentication_Stage from "./stage/Authentication_Stage";
-import Home_Stage from "./stage/Home_Stage";
-import Stage_Store from "./Stores/Stage_Store";
+import Authentication_Stage from "./stages/Authentication_Stage";
+import Home_Stage from "./stages/Home_Stage";
+import Stage_Store from "./stores/Stage_Store";
 
 export default function App() {
     const stage = Stage_Store((state) => state.stage);
