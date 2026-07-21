@@ -1,4 +1,5 @@
-// server/Socket_Handler.js
+import { player_manager } from "../core/Managers.js";
+import { lobby_manager } from "../core/Managers.js";
 
 export function socket_handler(io) {
     // Middleware to authenticate socket connections
@@ -22,5 +23,18 @@ export function socket_handler(io) {
 
     io.on("connection", (socket) => {
         console.log(`🔌 connected: ${socket.id}`);
+        player_manager.add_player({
+            firebase_uid: socket.data.firebase_uid,
+            username: socket.data.username,
+        });
+
+        socket.on("join_lobby", ({ lobby_id }) => {
+            const player = player_manager.get_player(socket.data.firebase_uid);
+        });
+
+        socket.on("disconnect", (reason) => {
+            console.log("Player disconnected", socket.id, reason);
+            player_manager.remove_player(socket.data.firebase_uid);
+        });
     });
 }

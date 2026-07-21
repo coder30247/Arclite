@@ -6,11 +6,11 @@ export default class Player_Manager {
         this.players = new Map(); // map of firebase uid to player instance
     }
 
-    add_player({ firebase_uid, name }) {
-        if (this.players.has(firebase_uid)) {
+    add_player({ firebase_uid, username }) {
+        if (this.has_player(firebase_uid)) {
             throw new Error(`Player with ID ${firebase_uid} already exists`);
         }
-        const player = new Player({ firebase_uid, name });
+        const player = new Player({ firebase_uid, username });
         this.players.set(firebase_uid, player);
         return player;
     }
@@ -23,7 +23,6 @@ export default class Player_Manager {
         return this.players.delete(firebase_uid);
     }
 
-
     get_all_players() {
         return Array.from(this.players.values());
     }
@@ -33,16 +32,12 @@ export default class Player_Manager {
     }
 
     // Additional utility methods
-    get_player_count() {
-        return this.players.size;
+
+    has_player(firebase_uid) {
+        return this.players.has(firebase_uid);
     }
 
-    update_player_name(firebase_uid, new_name) {
-        const player = this.get_player(firebase_uid);
-        if (player) {
-            player.update_name(new_name);
-            return true;
-        }
-        return false;
+    get_player_count() {
+        return this.players.size;
     }
 }
