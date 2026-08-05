@@ -16,10 +16,11 @@ export default function Home_Stage() {
 
     const set_stage = Stage_Store((state) => state.set_stage);
 
-    socket.on("lobby_created", () => {
+    socket.on("lobby:ready", ({ lobby_id }) => {
+        set_lobby_id(lobby_id);
         set_stage("lobby");
     });
-
+    
     return (
         <div>
             <h1>Home Stage</h1>
@@ -34,7 +35,7 @@ export default function Home_Stage() {
 
             <button
                 onClick={() => {
-                    socket.emit("create_lobby", { name: "User" });
+                    socket.emit("lobby:create");
                 }}
             >
                 Create Lobby
@@ -58,7 +59,7 @@ export default function Home_Stage() {
                         return;
                     }
 
-                    socket.emit("join_lobby", { lobby_id: lobby_id });
+                    socket.emit("lobby:join", { lobby_id: lobby_id });
                 }}
             >
                 Join Lobby

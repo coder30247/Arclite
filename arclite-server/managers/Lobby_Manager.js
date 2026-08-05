@@ -9,7 +9,7 @@ export default class Lobby_Manager {
         return typeof lobby_id === "string" && /^[A-Z]{6}$/.test(lobby_id);
     }
 
-    create_lobby(lobby_id, host_player, max_players, lobby_name) {
+    create_lobby(lobby_id, host_player, max_players, lobby_name = "") {
         if (!this.is_valid_lobby_id(lobby_id)) {
             throw new Error("Invalid lobby ID");
         }
