@@ -1,4 +1,3 @@
-// states/Lobby_Store.js
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -10,10 +9,10 @@ const Lobby_Store = create(
             host_uid: null,
             max_players: 4,
 
-            set_lobby_id: (id) => set({ lobby_id: id }),
+            set_lobby_id: (lobby_id) => set({ lobby_id: lobby_id }),
             set_players: (players_list) => set({ players: players_list }),
-            set_host_uid: (id) => set({ host_uid: id }),
-            set_max_players: (num) => set({ max_players: num }),
+            set_host_uid: (firebase_uid) => set({ host_uid: firebase_uid }),
+            set_max_players: (max_players) => set({ max_players: max_players }),
 
             reset_lobby: () =>
                 set({
@@ -37,8 +36,8 @@ const Lobby_Store = create(
                     sessionStorage.removeItem(key);
                 },
             },
-        }
-    )
+        },
+    ),
 );
 
 export default Lobby_Store;

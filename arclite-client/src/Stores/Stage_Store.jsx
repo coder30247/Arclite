@@ -1,16 +1,15 @@
-// states/Auth_Store.js
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-const Auth_Store = create(
+const Stage_Store = create(
     persist(
         (set) => ({
-            firebase_uid: null,
-            set_firebase_uid: (firebase_uid) => set({ firebase_uid }),
-            reset_auth: () => set({ firebase_uid: null }),
+            stage: "authentication",
+            set_stage: (stage) => set({ stage }),
+            reset_stage: () => set({ stage: "authentication" }),
         }),
         {
-            name: "arclite_auth",
+            name: "arclite_stage",
             storage: {
                 getItem: (key) => {
                     const item = sessionStorage.getItem(key);
@@ -23,8 +22,8 @@ const Auth_Store = create(
                     sessionStorage.removeItem(key);
                 },
             },
-        }
-    )
+        },
+    ),
 );
 
-export default Auth_Store;
+export default Stage_Store;
