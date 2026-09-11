@@ -102,10 +102,14 @@ export function socket_handler(io) {
                 lobby_manager.add_player_to_lobby(lobby_id, player);
                 socket.join(lobby_id);
                 socket.data.lobby_id = lobby_id;
+                let players = lobby_manager.get_lobby(lobby_id).get_all_players();
+
+                io.to(lobby_id).emit("lobby:update", { players });
+
                 console.log(
                     `Player ${player.firebase_uid} joined lobby ${lobby_id}`,
                 );
-                socket.emit("lobby:ready", { lobby_id });
+                socket.emit("lobby:ready", { lobby_id, players });
             } catch (error) {
                 console.error(
                     `Error adding player ${socket.data.firebase_uid} to lobby ${lobby_id}:`,
