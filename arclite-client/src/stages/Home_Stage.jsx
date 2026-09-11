@@ -14,13 +14,18 @@ export default function Home_Stage() {
     const lobby_id = Lobby_Store((state) => state.lobby_id);
     const set_lobby_id = Lobby_Store((state) => state.set_lobby_id);
 
+    const players = Lobby_Store((state) => state.players);
+    const set_players = Lobby_Store((state) => state.set_players);
+
     const set_stage = Stage_Store((state) => state.set_stage);
 
-    socket.on("lobby:ready", ({ lobby_id }) => {
+    socket.on("lobby:ready", ({ lobby_id, players }) => {
         set_lobby_id(lobby_id);
+        set_players(players);
+        console.log("Lobby ready:", lobby_id, players);
         set_stage("lobby");
     });
-    
+
     return (
         <div>
             <h1>Home Stage</h1>
@@ -35,12 +40,19 @@ export default function Home_Stage() {
 
             <button
                 onClick={() => {
+                    socket.emit("user:update", { username });
+                }}
+            >
+                set username
+            </button>
+
+            <button
+                onClick={() => {
                     socket.emit("lobby:create");
                 }}
             >
                 Create Lobby
             </button>
-
             <input
                 value={lobby_id}
                 onChange={(e) => {

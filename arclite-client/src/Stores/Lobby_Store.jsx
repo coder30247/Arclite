@@ -9,10 +9,13 @@ const Lobby_Store = create(
             host_uid: null,
             max_players: 4,
 
-            set_lobby_id: (lobby_id) => set({ lobby_id: lobby_id }),
+            set_lobby_id: (lobby_id) => set({ lobby_id }),
+
             set_players: (players_list) => set({ players: players_list }),
+
             set_host_uid: (firebase_uid) => set({ host_uid: firebase_uid }),
-            set_max_players: (max_players) => set({ max_players: max_players }),
+
+            set_max_players: (max_players) => set({ max_players }),
 
             reset_lobby: () =>
                 set({
@@ -24,18 +27,26 @@ const Lobby_Store = create(
         }),
         {
             name: "arclite_lobby",
+
             storage: {
                 getItem: (key) => {
                     const item = sessionStorage.getItem(key);
                     return item ? JSON.parse(item) : null;
                 },
+
                 setItem: (key, value) => {
                     sessionStorage.setItem(key, JSON.stringify(value));
                 },
+
                 removeItem: (key) => {
                     sessionStorage.removeItem(key);
                 },
             },
+
+            // Only persist lobby_id
+            partialize: (state) => ({
+                lobby_id: state.lobby_id,
+            }),
         },
     ),
 );
