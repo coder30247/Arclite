@@ -4,6 +4,7 @@ import {
     setPersistence,
     browserSessionPersistence,
 } from "firebase/auth";
+import { signOut } from "firebase/auth";
 
 const firebase_config = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -23,4 +24,12 @@ setPersistence(firebase_auth, browserSessionPersistence)
         console.error("❌ Firebase persistence error:", error);
     });
 
-export { firebase_auth };
+const sign_out = async () => {
+    try {
+        await signOut(firebase_auth);
+        console.log("✅ User signed out successfully");
+    } catch (error) {
+        console.error("❌ Error signing out:", error);
+    }
+};
+export { firebase_auth, sign_out };

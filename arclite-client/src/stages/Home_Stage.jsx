@@ -1,15 +1,20 @@
 import { useEffect } from "react";
-import { Initialize_Socket } from "../lib/Socket";
+import { Initialize_Socket, destroy_socket } from "../lib/Socket";
+import { sign_out } from "../lib/Firebase";
 
 import User_Store from "../stores/User_Store";
 import Lobby_Store from "../stores/Lobby_Store";
 import Stage_Store from "../stores/Stage_Store";
+import Auth_Store from "../stores/Auth_Store";
 
 export default function Home_Stage() {
     const socket = Initialize_Socket();
 
+    const reset_auth = Auth_Store((state) => state.reset_auth);
+
     const username = User_Store((state) => state.username);
     const set_username = User_Store((state) => state.set_username);
+    const reset_user = User_Store((state) => state.reset_user);
 
     const lobby_id = Lobby_Store((state) => state.lobby_id);
     const set_lobby_id = Lobby_Store((state) => state.set_lobby_id);
@@ -75,6 +80,19 @@ export default function Home_Stage() {
                 }}
             >
                 Join Lobby
+            </button>
+
+            <button
+                onClick={() => {
+                    socket.emit("user:logout");
+                    destroy_socket();
+                    set_stage("authentication");
+                    sign_out();
+                    reset_auth();
+                    reset_user();
+                }}
+            >
+                Logout
             </button>
         </div>
     );

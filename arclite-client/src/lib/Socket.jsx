@@ -30,7 +30,7 @@ export function Initialize_Socket() {
     return socket;
 }
 
-export function Destroy_Socket() {
+export function destroy_socket() {
     if (socket) {
         socket.disconnect();
         socket = null;

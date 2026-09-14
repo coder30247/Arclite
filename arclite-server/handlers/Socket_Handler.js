@@ -102,7 +102,9 @@ export function socket_handler(io) {
                 lobby_manager.add_player_to_lobby(lobby_id, player);
                 socket.join(lobby_id);
                 socket.data.lobby_id = lobby_id;
-                let players = lobby_manager.get_lobby(lobby_id).get_all_players();
+                let players = lobby_manager
+                    .get_lobby(lobby_id)
+                    .get_all_players();
 
                 io.to(lobby_id).emit("lobby:update", { players });
 
@@ -119,7 +121,26 @@ export function socket_handler(io) {
             }
         });
 
+        socket.on("user:logout", (callback) => {
+            const firebase_uid = socket.data.firebase_uid;
+
+            socket.data.is_logged_out = true;
+
+            player_manager.remove_player(firebase_uid);
+
+            callback?.({ success: true });
+
+            socket.disconnect();
+        });
+
         socket.on("disconnect", (reason) => {
+            const firebase_uid = socket.data.firebase_uid;
+
+            if (socket.data.is_logged_out) {
+                console.log(`Player ${firebase_uid} disconnected after logout`);
+                return;
+            }
+
             console.log(
                 "Player disconnected",
                 socket.data.firebase_uid,
