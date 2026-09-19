@@ -1,5 +1,7 @@
 import { Initialize_Socket } from "../lib/Socket";
 import Lobby_Store from "../stores/Lobby_Store";
+import Stage_Store from "../stores/Stage_Store";
+
 import { useEffect } from "react";
 
 export default function Lobby_Stage() {
@@ -9,15 +11,18 @@ export default function Lobby_Stage() {
     // right now the socket alone reconnects but in the server state is lost.
     // i think it can be fixed keeping a timeout in the server to keep the lobby alive
 
-    
     const lobby_id = Lobby_Store((state) => state.lobby_id);
     const players = Lobby_Store((state) => state.players);
     const set_players = Lobby_Store((state) => state.set_players);
-    
+    const reset_lobby = Lobby_Store((state) => state.reset_lobby);
+
+    const set_stage = Stage_Store((state) => state.set_stage);
+
     socket.on("lobby:update", ({ players }) => {
         console.log("Lobby update received:", players);
         set_players(players);
     });
+
     return (
         <div className="lobby-stage">
             <h1>Lobby Stage</h1>
@@ -37,6 +42,16 @@ export default function Lobby_Stage() {
                     ))}
                 </ul>
             )}
+
+            <button
+                onClick={() => {
+                    socket.emit("lobby:exit");
+                    set_stage("home");
+                    reset_lobby();
+                }}
+            >
+                Exit Lobby
+            </button>
         </div>
     );
 }

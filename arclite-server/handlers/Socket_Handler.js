@@ -121,6 +121,39 @@ export function socket_handler(io) {
             }
         });
 
+        socket.on("lobby:exit", () => {
+            try {
+                const lobby_id = socket.data.lobby_id;
+                const player = player_manager.get_player(
+                    socket.data.firebase_uid,
+                );
+                let lobby = lobby_manager.remove_player_from_lobby(
+                    lobby_id,
+                    player.firebase_uid,
+                );
+                socket.leave(lobby_id);
+                socket.data.lobby_id = null;
+                if (lobby) {
+                    let players = lobby.get_all_players();
+                    socket.to(lobby_id).emit("lobby:update", { players });
+
+                    console.log(
+                        `Player ${player.firebase_uid} exited lobby ${lobby_id}`,
+                    );
+                } else {
+                    console.log(
+                        `Player ${player.firebase_uid} exited lobby ${lobby_id}, lobby is now empty and removed`,
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    6`Error removing player ${socket.data.firebase_uid} from lobby ${lobby_id}:`,
+                    error.message,
+                );
+                socket.emit("lobby:error", { message: error.message });
+            }
+        });
+
         socket.on("user:logout", (callback) => {
             const firebase_uid = socket.data.firebase_uid;
 
