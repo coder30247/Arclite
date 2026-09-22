@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+
+    "configurations": [
+        {
+            "name": "Arclite Backend",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/arclite-server/index.js",
+            "cwd": "${workspaceFolder}/arclite-server",
+            "envFile": "${workspaceFolder}/arclite-server/.env",
+            "console": "integratedTerminal",
+            "sourceMaps": true
+        },
+        {
+            "name": "Arclite Frontend",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/arclite-client",
+            "preLaunchTask": "Start Vite"
+        }
+    ],
+
+    "compounds": [
+        {
+            "name": "Arclite Full Stack",
+            "configurations": ["Arclite Backend", "Arclite Frontend"],
+            "stopAll": true
+        }
+    ]
+}

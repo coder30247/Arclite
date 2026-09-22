@@ -17,12 +17,16 @@ export default function Lobby_Stage() {
     const reset_lobby = Lobby_Store((state) => state.reset_lobby);
 
     const set_stage = Stage_Store((state) => state.set_stage);
-
-    socket.on("lobby:update", ({ players }) => {
-        console.log("Lobby update received:", players);
-        set_players(players);
-    });
-
+    useEffect(() => {
+        const update_players = ({ players }) => {
+            console.log("Lobby update received:", players);
+            set_players(players);
+        };
+        socket.on("lobby:update", update_players);
+        return () => {
+            socket.off("lobby:update", update_players);
+        };
+    }, [socket, set_players]);
     return (
         <div className="lobby-stage">
             <h1>Lobby Stage</h1>

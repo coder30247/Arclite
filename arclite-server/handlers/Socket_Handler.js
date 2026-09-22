@@ -147,7 +147,7 @@ export function socket_handler(io) {
                 }
             } catch (error) {
                 console.error(
-                    6`Error removing player ${socket.data.firebase_uid} from lobby ${lobby_id}:`,
+                    `Error removing player ${socket.data.firebase_uid} from lobby ${lobby_id}:`,
                     error.message,
                 );
                 socket.emit("lobby:error", { message: error.message });
