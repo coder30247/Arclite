@@ -14,19 +14,26 @@ export default function Lobby_Stage() {
     const lobby_id = Lobby_Store((state) => state.lobby_id);
     const players = Lobby_Store((state) => state.players);
     const set_players = Lobby_Store((state) => state.set_players);
+    const update_lobby = Lobby_Store((state) => state.update_lobby);
     const reset_lobby = Lobby_Store((state) => state.reset_lobby);
 
     const set_stage = Stage_Store((state) => state.set_stage);
     useEffect(() => {
-        const update_players = ({ players }) => {
-            console.log("Lobby update received:", players);
-            set_players(players);
+        const handle_lobby_update = ({ lobby_data }) => {
+            update_lobby(lobby_data);
+            console.log(
+                "Lobby Update recevied:",
+                lobby_data.players,
+                lobby_data.host_uid,
+                lobby_data.max_players,
+            );
         };
-        socket.on("lobby:update", update_players);
+
+        socket.on("lobby:update", handle_lobby_update);
         return () => {
-            socket.off("lobby:update", update_players);
+            socket.off("lobby:update", handle_lobby_update);
         };
-    }, [socket, set_players]);
+    }, [socket, update_lobby]);
     return (
         <div className="lobby-stage">
             <h1>Lobby Stage</h1>

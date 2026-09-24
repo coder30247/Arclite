@@ -78,13 +78,19 @@ export function socket_handler(io) {
                     4,
                     "",
                 );
-                const players = lobby.get_all_players();
+                let players = lobby.get_all_players();
                 socket.join(lobby_id);
                 socket.data.lobby_id = lobby_id;
                 console.log(
                     `Lobby created: ${lobby_id} by player ${host_player.firebase_uid}`,
                 );
-                socket.emit("lobby:ready", { lobby_id, players });
+                let lobby_data = {
+                    lobby_id: lobby_id,
+                    players: players,
+                    host_uid: lobby.host_uid,
+                    max_players: lobby.max_players,
+                };
+                socket.emit("lobby:ready", { lobby_data });
             } catch (error) {
                 console.error(
                     `Error creating lobby for player ${socket.data.firebase_uid}:`,
@@ -99,19 +105,25 @@ export function socket_handler(io) {
                 const player = player_manager.get_player(
                     socket.data.firebase_uid,
                 );
-                lobby_manager.add_player_to_lobby(lobby_id, player);
-                socket.join(lobby_id);
+                let lobby = lobby_manager.add_player_to_lobby(lobby_id, player);
+
                 socket.data.lobby_id = lobby_id;
-                let players = lobby_manager
-                    .get_lobby(lobby_id)
-                    .get_all_players();
+                let players = lobby.get_all_players();
 
-                io.to(lobby_id).emit("lobby:update", { players });
+                let lobby_data = {
+                    lobby_id: lobby_id,
+                    players: players,
+                    host_uid: lobby.host_uid,
+                    max_players: lobby.max_players,
+                };
 
+                io.to(lobby_id).emit("lobby:update", { lobby_data });
+
+                socket.join(lobby_id);
                 console.log(
                     `Player ${player.firebase_uid} joined lobby ${lobby_id}`,
                 );
-                socket.emit("lobby:ready", { lobby_id, players });
+                socket.emit("lobby:ready", { lobby_data });
             } catch (error) {
                 console.error(
                     `Error adding player ${socket.data.firebase_uid} to lobby ${lobby_id}:`,
@@ -135,7 +147,13 @@ export function socket_handler(io) {
                 socket.data.lobby_id = null;
                 if (lobby) {
                     let players = lobby.get_all_players();
-                    socket.to(lobby_id).emit("lobby:update", { players });
+                    let lobby_data = {
+                        lobby_id: lobby.lobby_id,
+                        players: players,
+                        host_uid: lobby.host_uid,
+                        max_players: lobby.max_players,
+                    };
+                    socket.to(lobby_id).emit("lobby:update", { lobby_data });
 
                     console.log(
                         `Player ${player.firebase_uid} exited lobby ${lobby_id}`,
