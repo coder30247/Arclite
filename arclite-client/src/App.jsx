@@ -1,6 +1,7 @@
 import Authentication_Stage from "./stages/Authentication_Stage";
 import Home_Stage from "./stages/Home_Stage";
 import Lobby_Stage from "./stages/Lobby_Stage";
+import Game_Stage from "./stages/Game_Stage";
 
 import Stage_Store from "./stores/Stage_Store";
 
@@ -14,6 +15,8 @@ export default function App() {
             return <Home_Stage />;
         case "lobby":
             return <Lobby_Stage />;
+        case "game":
+            return <Game_Stage />;
         default:
             return <Authentication_Stage />;
     }

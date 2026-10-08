@@ -22,14 +22,29 @@ export default function Home_Stage() {
     const players = Lobby_Store((state) => state.players);
     const set_players = Lobby_Store((state) => state.set_players);
 
+    const set_lobby = Lobby_Store((state) => state.set_lobby);
+
     const set_stage = Stage_Store((state) => state.set_stage);
 
-    socket.on("lobby:ready", ({ lobby_id, players }) => {
-        set_lobby_id(lobby_id);
-        set_players(players);
-        console.log("Lobby ready:", lobby_id, players);
-        set_stage("lobby");
-    });
+    useEffect(() => {
+        const handle_lobby = ({ lobby_data }) => {
+            set_lobby(lobby_data);
+            console.log(
+                "Lobby ready:",
+                lobby_data.lobby_id,
+                lobby_data.players,
+                lobby_data.host_uid,
+                lobby_data.max_players,
+            );
+            set_stage("lobby");
+        };
+
+        socket.on("lobby:ready", handle_lobby);
+
+        return () => {
+            socket.off("lobby:ready", handle_lobby);
+        };
+    }, [socket, set_stage, lobby_id, players]);
 
     return (
         <div>

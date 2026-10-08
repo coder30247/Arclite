@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+
+    "tasks": [
+        {
+            "label": "Start Vite",
+            "type": "shell",
+            "command": "npm.cmd run dev",
+            "options": {
+                "cwd": "${workspaceFolder}/arclite-client"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^(.*)$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": ".*Local:.*"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": false
+            }
+        }
+    ]
+}

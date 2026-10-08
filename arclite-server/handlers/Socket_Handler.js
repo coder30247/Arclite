@@ -78,13 +78,19 @@ export function socket_handler(io) {
                     4,
                     "",
                 );
-                const players = lobby.get_all_players();
+                let players = lobby.get_all_players();
                 socket.join(lobby_id);
                 socket.data.lobby_id = lobby_id;
                 console.log(
                     `Lobby created: ${lobby_id} by player ${host_player.firebase_uid}`,
                 );
-                socket.emit("lobby:ready", { lobby_id, players });
+                let lobby_data = {
+                    lobby_id: lobby_id,
+                    players: players,
+                    host_uid: lobby.host_uid,
+                    max_players: lobby.max_players,
+                };
+                socket.emit("lobby:ready", { lobby_data });
             } catch (error) {
                 console.error(
                     `Error creating lobby for player ${socket.data.firebase_uid}:`,
@@ -99,22 +105,98 @@ export function socket_handler(io) {
                 const player = player_manager.get_player(
                     socket.data.firebase_uid,
                 );
-                lobby_manager.add_player_to_lobby(lobby_id, player);
-                socket.join(lobby_id);
+                let lobby = lobby_manager.add_player_to_lobby(lobby_id, player);
+
                 socket.data.lobby_id = lobby_id;
-                let players = lobby_manager
-                    .get_lobby(lobby_id)
-                    .get_all_players();
+                let players = lobby.get_all_players();
 
-                io.to(lobby_id).emit("lobby:update", { players });
+                let lobby_data = {
+                    lobby_id: lobby_id,
+                    players: players,
+                    host_uid: lobby.host_uid,
+                    max_players: lobby.max_players,
+                };
 
+                io.to(lobby_id).emit("lobby:update", { lobby_data });
+
+                socket.join(lobby_id);
                 console.log(
                     `Player ${player.firebase_uid} joined lobby ${lobby_id}`,
                 );
-                socket.emit("lobby:ready", { lobby_id, players });
+                socket.emit("lobby:ready", { lobby_data });
             } catch (error) {
                 console.error(
                     `Error adding player ${socket.data.firebase_uid} to lobby ${lobby_id}:`,
+                    error.message,
+                );
+                socket.emit("lobby:error", { message: error.message });
+            }
+        });
+
+        socket.on("lobby_player:ready", () => {
+            try {
+                const lobby_id = socket.data.lobby_id;
+                const firebase_uid = socket.data.firebase_uid;
+
+                let lobby = lobby_manager.get_lobby(lobby_id);
+                if (!lobby) {
+                    throw new Error(`Lobby with ID ${lobby_id} does not exist`);
+                }
+
+                lobby.set_player_ready(firebase_uid);
+
+                let players = lobby.get_all_players();
+
+                let lobby_data = {
+                    lobby_id: lobby_id,
+                    players: players,
+                    host_uid: lobby.host_uid,
+                    max_players: lobby.max_players,
+                };
+
+                io.to(lobby_id).emit("lobby:update", { lobby_data });
+
+                console.log(
+                    `Player ${firebase_uid} is ready in lobby ${lobby_id}`,
+                );
+            } catch (error) {
+                console.error(
+                    `Error setting player ${socket.data.firebase_uid} as ready in lobby ${socket.data.lobby_id}:`,
+                    error.message,
+                );
+                socket.emit("lobby:error", { message: error.message });
+            }
+        });
+
+        socket.on("lobby_player:not_ready", () => {
+            try {
+                const lobby_id = socket.data.lobby_id;
+                const firebase_uid = socket.data.firebase_uid;
+
+                let lobby = lobby_manager.get_lobby(lobby_id);
+                if (!lobby) {
+                    throw new Error(`Lobby with ID ${lobby_id} does not exist`);
+                }
+
+                lobby.set_player_not_ready(firebase_uid);
+
+                let players = lobby.get_all_players();
+
+                let lobby_data = {
+                    lobby_id: lobby_id,
+                    players: players,
+                    host_uid: lobby.host_uid,
+                    max_players: lobby.max_players,
+                };
+
+                io.to(lobby_id).emit("lobby:update", { lobby_data });
+
+                console.log(
+                    `Player ${firebase_uid} is not ready in lobby ${lobby_id}`,
+                );
+            } catch (error) {
+                console.error(
+                    `Error setting player ${socket.data.firebase_uid} as not ready in lobby ${socket.data.lobby_id}:`,
                     error.message,
                 );
                 socket.emit("lobby:error", { message: error.message });
@@ -135,7 +217,13 @@ export function socket_handler(io) {
                 socket.data.lobby_id = null;
                 if (lobby) {
                     let players = lobby.get_all_players();
-                    socket.to(lobby_id).emit("lobby:update", { players });
+                    let lobby_data = {
+                        lobby_id: lobby.lobby_id,
+                        players: players,
+                        host_uid: lobby.host_uid,
+                        max_players: lobby.max_players,
+                    };
+                    socket.to(lobby_id).emit("lobby:update", { lobby_data });
 
                     console.log(
                         `Player ${player.firebase_uid} exited lobby ${lobby_id}`,
@@ -147,7 +235,42 @@ export function socket_handler(io) {
                 }
             } catch (error) {
                 console.error(
-                    6`Error removing player ${socket.data.firebase_uid} from lobby ${lobby_id}:`,
+                    `Error removing player ${socket.data.firebase_uid} from lobby ${lobby_id}:`,
+                    error.message,
+                );
+                socket.emit("lobby:error", { message: error.message });
+            }
+        });
+
+        socket.on("game:start", () => {
+            try {
+                const lobby_id = socket.data.lobby_id;
+                const firebase_uid = socket.data.firebase_uid;
+
+                let lobby = lobby_manager.get_lobby(lobby_id);
+                if (!lobby) {
+                    throw new Error(`Lobby with ID ${lobby_id} does not exist`);
+                }
+
+                if (lobby.host_uid !== firebase_uid) {
+                    throw new Error(
+                        `Player ${firebase_uid} is not the host of lobby ${lobby_id}`,
+                    );
+                }
+
+                if (!lobby.are_all_players_ready()) {
+                    throw new Error(
+                        `Cannot start game: not all players in lobby ${lobby_id} are ready`,
+                    );
+                }
+                // Start the game logic here
+                lobby.start_game();
+                io.to(lobby_id).emit("game:started", { lobby_id });
+                
+                console.log(`Game started in lobby ${lobby_id}`);
+            } catch (error) {
+                console.error(
+                    `Error starting game for lobby ${socket.data.lobby_id}:`,
                     error.message,
                 );
                 socket.emit("lobby:error", { message: error.message });

@@ -1,15 +1,17 @@
 // server/models/Lobby.js
+import Lobby_Player from "./Lobby_Player.js";
 export default class Lobby {
     constructor(lobby_id, host_player, max_players = 4, lobby_name = "") {
         this.lobby_id = lobby_id; // unique lobby identifier
         this.host_uid = host_player.firebase_uid; // host player id
         this.max_players = max_players; // maximum player limit
-        this.players = new Map(); // map of player's firebase_uid to player object
+        this.players = new Map(); // map of player's firebase_uid to Lobby_Player
         this.state = "lobby"; // state: lobby, game
 
         this.lobby_name = lobby_name ? lobby_name.trim() : `lobby-${lobby_id}`; // lobby display name
 
         this.add_player(host_player); // add host player to the lobby
+        this.set_player_ready(host_player.firebase_uid); // set host player as ready
     }
 
     // Adding a player to the lobby
@@ -20,7 +22,7 @@ export default class Lobby {
         if (this.players.has(player.firebase_uid)) {
             throw new Error("Player already in lobby");
         }
-        this.players.set(player.firebase_uid, player);
+        this.players.set(player.firebase_uid, new Lobby_Player(player));
     }
 
     // Removing a player from the lobby
@@ -39,6 +41,7 @@ export default class Lobby {
         if (this.host_uid === firebase_uid && !this.is_empty()) {
             const next_player_uid = this.players.keys().next().value;
             this.host_uid = next_player_uid;
+            this.set_player_ready(this.host_uid); // set new host as ready
         }
     }
 
@@ -47,7 +50,9 @@ export default class Lobby {
         if (!this.players.has(new_host_uid)) {
             throw new Error("New host must be a player in the lobby");
         }
+        this.set_player_not_ready(this.host_uid); // set host as not ready
         this.host_uid = new_host_uid;
+        this.set_player_ready(new_host_uid); // set new host as ready
     }
 
     get_player(firebase_uid) {
@@ -102,5 +107,34 @@ export default class Lobby {
 
             this.max_players = max_players;
         }
+    }
+
+    set_player_ready(firebase_uid) {
+        const lobby_player = this.players.get(firebase_uid);
+
+        if (!lobby_player) {
+            throw new Error("Player not found in lobby");
+        }
+
+        lobby_player.set_ready();
+    }
+
+    set_player_not_ready(firebase_uid) {
+        const lobby_player = this.players.get(firebase_uid);
+
+        if (!lobby_player) {
+            throw new Error("Player not found in lobby");
+        }
+
+        lobby_player.set_not_ready();
+    }
+
+    are_all_players_ready() {
+        for (const player of this.players.values()) {
+            if (!player.ready) {
+                return false;
+            }
+        }
+        return true;
     }
 }

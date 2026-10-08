@@ -1,4 +1,5 @@
 import { Initialize_Socket } from "../lib/Socket";
+import Auth_Store from "../stores/Auth_Store";
 import Lobby_Store from "../stores/Lobby_Store";
 import Stage_Store from "../stores/Stage_Store";
 
@@ -14,15 +15,35 @@ export default function Lobby_Stage() {
     const lobby_id = Lobby_Store((state) => state.lobby_id);
     const players = Lobby_Store((state) => state.players);
     const set_players = Lobby_Store((state) => state.set_players);
+    const update_lobby = Lobby_Store((state) => state.update_lobby);
     const reset_lobby = Lobby_Store((state) => state.reset_lobby);
 
+    const host_uid = Lobby_Store((state) => state.host_uid);
+    const firebase_uid = Auth_Store((state) => state.firebase_uid);
+
     const set_stage = Stage_Store((state) => state.set_stage);
+    useEffect(() => {
+        const handle_lobby_update = ({ lobby_data }) => {
+            update_lobby(lobby_data);
+            console.log(
+                "Lobby Update recevied:",
+                lobby_data.players,
+                lobby_data.host_uid,
+                lobby_data.max_players,
+            );
+        };
+        const handle_game_start = () => {
+            console.log("Game started!");
+            set_stage("game");
+        };
 
-    socket.on("lobby:update", ({ players }) => {
-        console.log("Lobby update received:", players);
-        set_players(players);
-    });
-
+        socket.on("lobby:update", handle_lobby_update);
+        socket.on("game:started", handle_game_start);
+        return () => {
+            socket.off("lobby:update", handle_lobby_update);
+            socket.off("game:started", handle_game_start);
+        };
+    }, [socket, update_lobby]);
     return (
         <div className="lobby-stage">
             <h1>Lobby Stage</h1>
@@ -38,9 +59,51 @@ export default function Lobby_Stage() {
             ) : (
                 <ul>
                     {players.map((player) => (
-                        <li key={player.firebase_uid}>{player.username}</li>
+                        <li key={player.firebase_uid}>
+                            {player.username}
+
+                            {player.firebase_uid === host_uid && (
+                                <span> (host)</span>
+                            )}
+
+                            {player.firebase_uid === firebase_uid && (
+                                <span> (you)</span>
+                            )}
+                            {player.ready ? (
+                                <span> (ready)</span>
+                            ) : (
+                                <span> (not ready)</span>
+                            )}
+                        </li>
                     ))}
                 </ul>
+            )}
+            {firebase_uid === host_uid && (
+                <button
+                    onClick={() => {
+                        socket.emit("game:start");
+                    }}
+                >
+                    Start Game
+                </button>
+            )}
+            {firebase_uid !== host_uid && (
+                <>
+                    <button
+                        onClick={() => {
+                            socket.emit("lobby_player:ready");
+                        }}
+                    >
+                        Ready
+                    </button>
+                    <button
+                        onClick={() => {
+                            socket.emit("lobby_player:not_ready");
+                        }}
+                    >
+                        Not Ready
+                    </button>
+                </>
             )}
 
             <button
