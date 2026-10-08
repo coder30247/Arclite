@@ -242,6 +242,41 @@ export function socket_handler(io) {
             }
         });
 
+        socket.on("game:start", () => {
+            try {
+                const lobby_id = socket.data.lobby_id;
+                const firebase_uid = socket.data.firebase_uid;
+
+                let lobby = lobby_manager.get_lobby(lobby_id);
+                if (!lobby) {
+                    throw new Error(`Lobby with ID ${lobby_id} does not exist`);
+                }
+
+                if (lobby.host_uid !== firebase_uid) {
+                    throw new Error(
+                        `Player ${firebase_uid} is not the host of lobby ${lobby_id}`,
+                    );
+                }
+
+                if (!lobby.are_all_players_ready()) {
+                    throw new Error(
+                        `Cannot start game: not all players in lobby ${lobby_id} are ready`,
+                    );
+                }
+                // Start the game logic here
+                lobby.start_game();
+                io.to(lobby_id).emit("game:started", { lobby_id });
+                
+                console.log(`Game started in lobby ${lobby_id}`);
+            } catch (error) {
+                console.error(
+                    `Error starting game for lobby ${socket.data.lobby_id}:`,
+                    error.message,
+                );
+                socket.emit("lobby:error", { message: error.message });
+            }
+        });
+
         socket.on("user:logout", (callback) => {
             const firebase_uid = socket.data.firebase_uid;
 

@@ -32,10 +32,16 @@ export default function Lobby_Stage() {
                 lobby_data.max_players,
             );
         };
+        const handle_game_start = () => {
+            console.log("Game started!");
+            set_stage("game");
+        };
 
         socket.on("lobby:update", handle_lobby_update);
+        socket.on("game:started", handle_game_start);
         return () => {
             socket.off("lobby:update", handle_lobby_update);
+            socket.off("game:started", handle_game_start);
         };
     }, [socket, update_lobby]);
     return (

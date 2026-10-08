@@ -128,4 +128,13 @@ export default class Lobby {
 
         lobby_player.set_not_ready();
     }
+
+    are_all_players_ready() {
+        for (const player of this.players.values()) {
+            if (!player.ready) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
