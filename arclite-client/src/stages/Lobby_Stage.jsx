@@ -77,13 +77,22 @@ export default function Lobby_Stage() {
                 </button>
             )}
             {firebase_uid !== host_uid && (
-                <button
-                    onClick={() => {
-                        socket.emit("lobby_player:ready");
-                    }}
-                >
-                    Ready
-                </button>
+                <>
+                    <button
+                        onClick={() => {
+                            socket.emit("lobby_player:ready");
+                        }}
+                    >
+                        Ready
+                    </button>
+                    <button
+                        onClick={() => {
+                            socket.emit("lobby_player:not_ready");
+                        }}
+                    >
+                        Not Ready
+                    </button>
+                </>
             )}
 
             <button
