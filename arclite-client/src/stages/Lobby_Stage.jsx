@@ -63,6 +63,11 @@ export default function Lobby_Stage() {
                             {player.firebase_uid === firebase_uid && (
                                 <span> (you)</span>
                             )}
+                            {player.ready ? (
+                                <span> (ready)</span>
+                            ) : (
+                                <span> (not ready)</span>
+                            )}
                         </li>
                     ))}
                 </ul>
